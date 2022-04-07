@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  rs:
+    build:
+      context: .
+    ports: 
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    command: >
+      sh -c "python manage.py wait_for_db &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000" 
+    environment:
+      - DB_HOST=db
+      - DB_NAME=netmesh
+      - DB_USER=postgres
+      - DB_PASS=supersecretpassword
+      - GEO_DB_HOST=geodb
+      - GEO_DB_NAME=geodjango
+      - GEO_DB_USER=geo
+      - GEO_DB_PASS=supersecretpassword
+    depends_on:
+      - db
+      - geodb
+  db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_DB=netmesh
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=supersecretpassword
+
+  geodb:
+    image: kartoza/postgis:14-3.2--v2022.02.14
+    environment:
+      - POSTGRES_DB=geodjango
+      - POSTGRES_USER=geo
+      - POSTGRES_PASSWORD=supersecretpassword
