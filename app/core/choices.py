@@ -30,7 +30,8 @@ ntc_region_choices = [
 device_choices = [
         ('unknown', 'Unknown'),
         ('computer', 'Computer'),
-        ('smartphone', 'Smart Phone')
+        ('smartphone', 'Smart Phone'),
+        ('tablet', 'Tablet')
     ]
 network_choices = [
     ('unkown', 'unknown'),

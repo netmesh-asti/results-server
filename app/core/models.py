@@ -9,6 +9,7 @@ from core import choices
 
 
 class UserManager(BaseUserManager):
+
     def create_user(self, email, password=None, **kwargs):
         if not email:
             raise ValueError()
@@ -22,8 +23,9 @@ class UserManager(BaseUserManager):
         """
         Create and save a SuperUser with the given email and password.
         """
-        user = self.create_user(email, password)
+        user = self.create_user(email, password, **extra_fields)
         user.is_staff = True
+        user.is_superuser = True
         user.save(using=self._db)
 
         return user
@@ -40,12 +42,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         default='Asia/Manila',
         choices=choices.timezone_choices
     )
-    role = models.CharField(max_length=20, default='Cloud Admin')
     is_ntc = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
+
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     USERNAME_FIELD = 'email'
 
@@ -54,12 +57,14 @@ class RFC6349TestDevice(models.Model):
     """
         Model for the hardware device used by the RFC-6349 test agents
     """
-    date_created = models.DateTimeField(auto_now_add=True)
-    hash = models.CharField(max_length=64, unique=True, null=False)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=False, on_delete=models.CASCADE
-    )
+    manufacturer = models.CharField(max_length=250, null=True)
+    product = models.CharField(max_length=250, null=True)
+    version = models.FloatField(null=True)
+    serialnumber = models.CharField(max_length=50, null=True)
     device_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    owner = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
+    #hash = models.CharField(max_length=64, unique=True, null=False)
 
     class Meta:
         verbose_name = 'RFC6349 Test Device'
@@ -75,12 +80,12 @@ class FieldTester(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
-    uuid = models.UUIDField(default=uuid.uuid4, unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4(), unique=True)
     ntc_region = models.CharField(
         max_length=20, choices=choices.ntc_region_choices,
         default='unknown'
     )
-    device = models.CharField(
+    device_kind = models.CharField(
         max_length=20, choices=choices.device_choices,
         default='computer'
     )
