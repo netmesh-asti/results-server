@@ -5,13 +5,15 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
 from django.shortcuts import get_object_or_404
 
+from rest_framework import viewsets
+
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system"""
     serializer_class = UserSerializer
     permission_classes = (
-        permissions.IsAuthenticated,
-        permissions.IsAdminUser)
+        permissions.IsAdminUser,
+    )
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):

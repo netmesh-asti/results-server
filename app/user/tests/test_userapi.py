@@ -8,6 +8,7 @@ from rest_framework import status
 CREATE_USER_URL = reverse("user:create")
 RETRIEVE_USER_URL = reverse("user:me")
 RETRIEVE_FIELD_TESTER_URL = reverse("user:account")
+GET_TOKEN_URL = reverse("user:token")
 
 
 def create_user(is_admin=False, **params):
@@ -17,7 +18,7 @@ def create_user(is_admin=False, **params):
     return get_user_model().objects.create_user(**params)
 
 
-class PrivateUserApiTests(TestCase):
+class AdminUserApiTests(TestCase):
     """Test Create User API (NTC)"""
 
     def setUp(self):
@@ -31,7 +32,8 @@ class PrivateUserApiTests(TestCase):
         self.admin_user = create_user(is_admin=True, **self.user_info)
         self.client = APIClient()
 
-    def test_create_not_authenticated_forbidden(self):
+    def test_not_authenticated_create_account_forbidden(self):
+        """Test that create user returns unauthorized if not authenticated"""
         res = self.client.post(CREATE_USER_URL, {})
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -82,3 +84,25 @@ class PrivateUserApiTests(TestCase):
         res = self.client.get(RETRIEVE_FIELD_TESTER_URL,
                               {'email': 'none@gmail.com'})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_token_no_credentials_400(self):
+        """test login without credentials raises 400 Bad Request"""
+        res = self.client.post(GET_TOKEN_URL, {})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_token_bad_credentials_400(self):
+        """test login with wrong credentials raises 400 Bad Request"""
+        res = self.client.post(GET_TOKEN_URL, {
+            "email": "test@gmail.com",
+            "password": "wrong_pass",
+            })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_get_token_valid_user_ok(self):
+        """test that token is returned"""
+        res = self.client.post(GET_TOKEN_URL, {
+                    "email": "test@gmail.com",
+                    "password": "test123",
+            })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("token", res.data)
