@@ -1,7 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from core import models
+
+from rest_framework.test import APIClient
+from rest_framework import status
 
 
 class testUserModel(TestCase):
@@ -71,26 +75,26 @@ class NtcObjectsTest(TestCase):
         #    password='testpass123'
 
         #)
-        device = models.RFC6349TestDevice.objects.create(
+        device = models.RfcDevice.objects.create(
             manufacturer='MSI',
             product='GF63',
             version='1.0',
-            owner = self.user,
+            user = self.user,
         )
 
         self.assertEqual(device.manufacturer, 'MSI')
         self.assertEqual(device.product, 'GF63')
         self.assertEqual(device.version, '1.0')
-        self.assertEqual(device.owner, self.user)
-    
+        self.assertEqual(device.user, self.user)
+
     def test_field_tester(self):
         """Test Field Tester Created successfully"""
 
-        device = models.RFC6349TestDevice.objects.create(
+        device = models.RfcDevice.objects.create(
             manufacturer='MSI',
             product='GF63',
             version='1.0',
-            owner = self.user,
+            user = self.user,
         )
 
         fieldtester = models.FieldTester.objects.create(
@@ -104,11 +108,8 @@ class NtcObjectsTest(TestCase):
         self.assertEqual(fieldtester.device_kind, 'computer')
         self.assertEqual(fieldtester.device, device)
 
-    def test_coordinates(self):
-        """test coordinates created successfully"""
 
-        coordinates = models.Coordinates.objects.create()
+class TestAndroidResultModel(TestCase):
+    """Test Android Test Result create successful"""
 
-        self.assertNotEqual(coordinates.lat,0)
-        self.assertNotEqual(coordinates.long,0)
-        
+    pass

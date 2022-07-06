@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, \
                                         PermissionsMixin
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from django.conf import settings
 from core import choices
@@ -53,16 +54,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
 
 
-class RFC6349TestDevice(models.Model):
+class RfcDevice(models.Model):
     """
         Model for the hardware device used by the RFC-6349 test agents
     """
+    device_id = models.UUIDField(default=uuid.uuid4, unique=True)
     manufacturer = models.CharField(max_length=250, null=True)
     product = models.CharField(max_length=250, null=True)
     version = models.FloatField(null=True)
     serialnumber = models.CharField(max_length=50, null=True)
-    device_id = models.UUIDField(default=uuid.uuid4, unique=True)
-    owner = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True,
+                                on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
     #hash = models.CharField(max_length=64, unique=True, null=False)
 
@@ -94,7 +96,8 @@ class FieldTester(models.Model):
         default='unregistered'
     )
     device = models.ForeignKey(
-        RFC6349TestDevice, null=False,
+        RfcDevice,
+        null=False,
         on_delete=models.CASCADE
     )
 
@@ -108,17 +111,35 @@ class FieldTester(models.Model):
             return self.user.username
 
 
-class Coordinates(models.Model):
+class AndroidDevice(models.Model):
+    """Android Device assigned to Field Tester"""
+    serial_number = models.CharField(max_length=250, null=True)
+    imei = models.IntegerField()
+    phone_model = models.CharField(max_length=250)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    lat = models.DecimalField(
-        default=16.647322, max_digits=22, decimal_places=16,
-        blank=True, null=True, verbose_name="latitude"
-    )
-    long = models.DecimalField(
-        default=121.071959,  max_digits=22, decimal_places=16,
-        blank=True, null=True, verbose_name="longitude"
-    )
 
+class AndroidResult(models.Model):
+    """Android devices for speed testings"""
+    phone_model = models.CharField(max_length=250, null=True)
+    android_version = models.CharField(max_length=100, null= True)
+    ssid = models.CharField(max_length=250, null=True)
+    bssid = models.CharField(max_length=250, null=True)
+    rssi = models.FloatField(null=True)
+    network_type = models.CharField(max_length=20, null=True)
+    imei = models.IntegerField(null=True)
+    cellid = models.IntegerField(null=True)
+    mcc = models.IntegerField(null=True)
+    mnc = models.IntegerField(null=True)
+    tac = models.IntegerField(null=True)
+    signal_strength = models.FloatField(null=True)
+    signal_quality = models.IntegerField(null=True)
+    operator = models.CharField(max_length=50, null=True)
+    lat = models.FloatField(default=0,validators=
+        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=
+        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
 
 class IPaddress(models.Model):
     """
@@ -131,9 +152,12 @@ class IPaddress(models.Model):
     region = models.CharField(max_length=50)
     region_name = models.CharField(max_length=50)
     city = models.CharField(max_length=50)
-    zip = models.CharField(max_length=10)
+    zip_code = models.CharField(max_length=10)
     pcap = models.CharField(max_length=100, null=True)
-    location = models.ForeignKey(Coordinates, on_delete=models.CASCADE)
+    lat = models.FloatField(default=0,validators=
+        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=
+        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
     # lat = models.FloatField(default=0,validators=
     # [MaxValueValidator(90.0), MinValueValidator(-90.0)])
     # long = models.FloatField(default=0, validators=
@@ -166,10 +190,12 @@ class Server(models.Model):
         choices=choices.server_choices,
         default='unknown'
     )
-    location = models.ForeignKey(
-        Coordinates,
-        on_delete=models.CASCADE
-    )
+
+    lat = models.FloatField(default=0,validators=
+        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=
+        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+
     city = models.CharField(
         max_length=200,
         null=True
@@ -191,6 +217,7 @@ class Server(models.Model):
         max_length=500,
         default="https://netmesh-web.asti.dost.gov.ph/"
     )
+
 
     def __str__(self):
         return "Server %s (%s)" % (self.nickname, self.uuid)
@@ -226,10 +253,10 @@ class Test(models.Model):
         default='unknown'
     )
     pcap = models.CharField(max_length=100, null=True)
-    location = models.ForeignKey(
-        Coordinates,
-        on_delete=models.CASCADE
-    )
+    lat = models.FloatField(default=0,validators=
+        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=
+        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
     mode = models.CharField(
         null=False, max_length=50,
         choices=choices.test_mode_choices,
@@ -240,7 +267,7 @@ class Test(models.Model):
         return "Test %s" % self.id
 
 
-class DataPoint(models.Model):
+class RfcResult(models.Model):
     """
         Model for an RFC-6349 test datapoint
     """
@@ -309,6 +336,8 @@ class DataPoint(models.Model):
     buffer_delay = models.FloatField(
         null=True
     )  # Buffer Delay, in %
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
 
 class Traceroute(models.Model):
@@ -411,10 +440,10 @@ class NMProDataPoint(models.Model):
         null=False,
         verbose_name='Server IP address'
     )
-    location = models.ForeignKey(
-        Coordinates,
-        on_delete=models.CASCADE
-    )
+    lat = models.FloatField(default=0,validators=
+        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=
+        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
     mode = models.CharField(
         null=False,
         max_length=10,
