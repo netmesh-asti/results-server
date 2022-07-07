@@ -107,9 +107,3 @@ class NtcObjectsTest(TestCase):
         self.assertEqual(fieldtester.ntc_region, 'unknown')
         self.assertEqual(fieldtester.device_kind, 'computer')
         self.assertEqual(fieldtester.device, device)
-
-
-class TestAndroidResultModel(TestCase):
-    """Test Android Test Result create successful"""
-
-    pass
