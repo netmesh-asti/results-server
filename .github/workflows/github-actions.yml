@@ -44,8 +44,10 @@ jobs:
           # Optional (recommended) mail server password:
           password: ${{secrets.MAIL_PASSWORD}}
           # Required mail subject:
-          subject: Github Actions job result
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          # email body as text
+          body: ${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
           # Required recipients' addresses:
-          to: jeanjay.quitayen@asti.dost.gov.ph,maryjane.alpad@asti.dost.gov.ph
+          to: maryjane.alpad@asti.dost.gov.ph
           # Required sender full name (address can be skipped):
           from: Jean Jay Quitayen # <user@example.com>
