@@ -32,6 +32,7 @@ jobs:
     - name: Lint
       run: docker-compose run --rm rs sh -c "flake8"
     - name: Send mail
+      if: ${{ failure() }}
       uses: dawidd6/action-send-mail@v3
       with:
           # Required mail server address:
