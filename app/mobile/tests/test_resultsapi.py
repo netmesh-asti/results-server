@@ -5,8 +5,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-CREATE_RESULT_URL = reverse("results:create")
-LIST_RESULTS_URL = reverse("results:list")
+CREATE_RESULT_URL = reverse("android:store")
+LIST_RESULTS_URL = reverse("android:list")
 
 
 def create_user(is_admin=False, **params):

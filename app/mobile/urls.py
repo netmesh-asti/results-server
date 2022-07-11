@@ -1,15 +1,15 @@
 from django.urls import path
 
-from results import views
+from mobile import views
 
 
-app_name = 'results'
+app_name = 'android'
 
 
 urlpatterns = [
-    path('android/create',
+    path('android/store',
          views.CreateAndroidResView.as_view(),
-         name='create'
+         name='store'
          ),
     path('android/list', views.ListAndroidResView.as_view(), name='list')
 ]

@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions
-from results.serializers import AndroidResultsSerializer
+from mobile.serializers import AndroidResultsSerializer
 
 from core.models import AndroidResult
 
