@@ -1,6 +1,6 @@
-from djanog.url import path
+# from djanog.url import path
 
-from user.views import CreateUserView
+# from user.views import CreateUserView
 
 app_name = 'user'
 

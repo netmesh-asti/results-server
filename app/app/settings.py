@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     'core',
     'user',
     'mobile',
-    'web',
-    'rfc6349'
+    # 'web',
+    # 'rfc6349'
 ]
 
 MIDDLEWARE = [
