@@ -66,7 +66,7 @@ class RfcDevice(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True,
                                 on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True)
-    #hash = models.CharField(max_length=64, unique=True, null=False)
+    # hash = models.CharField(max_length=64, unique=True, null=False)
 
     class Meta:
         verbose_name = 'RFC6349 Test Device'
@@ -116,13 +116,14 @@ class AndroidDevice(models.Model):
     serial_number = models.CharField(max_length=250, null=True)
     imei = models.IntegerField()
     phone_model = models.CharField(max_length=250)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
 
 
 class AndroidResult(models.Model):
     """Android devices for speed testings"""
     phone_model = models.CharField(max_length=250, null=True)
-    android_version = models.CharField(max_length=100, null= True)
+    android_version = models.CharField(max_length=100, null=True)
     ssid = models.CharField(max_length=250, null=True)
     bssid = models.CharField(max_length=250, null=True)
     rssi = models.FloatField(null=True)
@@ -135,12 +136,12 @@ class AndroidResult(models.Model):
     signal_strength = models.FloatField(null=True)
     signal_quality = models.IntegerField(null=True)
     operator = models.CharField(max_length=50, null=True)
-    lat = models.FloatField(default=0,validators=
-        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=
-        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
-
+    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
 class IPaddress(models.Model):
     """
         Model for IP addresses containing its geolocation & ISP data
