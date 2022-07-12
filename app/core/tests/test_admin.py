@@ -7,8 +7,8 @@ class AdminSiteTests(TestCase):
 
     def setUp(self):
         self.client = Client()
-        email='admin@gmail.com'
-        password='password123'
+        email = 'admin@gmail.com'
+        password = 'password123'
         first_name = 'NTC'
         last_name = 'Netmesh'
 
@@ -21,10 +21,9 @@ class AdminSiteTests(TestCase):
 
         self.client.force_login(self.admin_user)
         self.user = get_user_model().objects.create_user(
-            email = 'tester@gmail.com',
-            password = 'password123',
-            first_name='Test',
-            last_name='User'
+            email='tester@gmail.com',
+            password='password123',
+            first_name='Test', last_name='User'
         )
 
     def test_users_listed(self):

@@ -1,11 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from django.urls import reverse
+# from django.urls import reverse
 
 from core import models
 
-from rest_framework.test import APIClient
-from rest_framework import status
+# from rest_framework.test import APIClient
+# from rest_framework import status
 
 
 class testUserModel(TestCase):
@@ -57,6 +57,7 @@ class testUserModel(TestCase):
         with self.assertRaises(ValueError):
             get_user_model().objects.create_user(None, 'testpassword123')
 
+
 class NtcObjectsTest(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -68,18 +69,17 @@ class NtcObjectsTest(TestCase):
 
     def test_rfc_device(self):
         """Test rfcdevice is created successfuly"""
-        #staff = get_user_model().objects.create_superuser(
+        # staff = get_user_model().objects.create_superuser(
         #    email='admin@gmail.com',
         #    first_name='admin',
         #    last_name='netmesh',
         #    password='testpass123'
-
-        #)
+        # )
         device = models.RfcDevice.objects.create(
             manufacturer='MSI',
             product='GF63',
             version='1.0',
-            user = self.user,
+            user=self.user,
         )
 
         self.assertEqual(device.manufacturer, 'MSI')
@@ -94,15 +94,14 @@ class NtcObjectsTest(TestCase):
             manufacturer='MSI',
             product='GF63',
             version='1.0',
-            user = self.user,
+            user=self.user,
         )
 
         fieldtester = models.FieldTester.objects.create(
-            user = self.user,
+            user=self.user,
             device_kind='computer',
             device=device,
-
-        )
+            )
         self.assertEqual(fieldtester.user, self.user)
         self.assertEqual(fieldtester.ntc_region, 'unknown')
         self.assertEqual(fieldtester.device_kind, 'computer')

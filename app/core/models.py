@@ -142,6 +142,8 @@ class AndroidResult(models.Model):
                             MinValueValidator(-180.0)])
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
+
+
 class IPaddress(models.Model):
     """
         Model for IP addresses containing its geolocation & ISP data
@@ -155,10 +157,10 @@ class IPaddress(models.Model):
     city = models.CharField(max_length=50)
     zip_code = models.CharField(max_length=10)
     pcap = models.CharField(max_length=100, null=True)
-    lat = models.FloatField(default=0,validators=
-        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=
-        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
     # lat = models.FloatField(default=0,validators=
     # [MaxValueValidator(90.0), MinValueValidator(-90.0)])
     # long = models.FloatField(default=0, validators=
@@ -192,10 +194,10 @@ class Server(models.Model):
         default='unknown'
     )
 
-    lat = models.FloatField(default=0,validators=
-        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=
-        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
 
     city = models.CharField(
         max_length=200,
@@ -218,7 +220,6 @@ class Server(models.Model):
         max_length=500,
         default="https://netmesh-web.asti.dost.gov.ph/"
     )
-
 
     def __str__(self):
         return "Server %s (%s)" % (self.nickname, self.uuid)
@@ -254,10 +255,10 @@ class Test(models.Model):
         default='unknown'
     )
     pcap = models.CharField(max_length=100, null=True)
-    lat = models.FloatField(default=0,validators=
-        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=
-        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
     mode = models.CharField(
         null=False, max_length=50,
         choices=choices.test_mode_choices,
@@ -338,7 +339,8 @@ class RfcResult(models.Model):
         null=True
     )  # Buffer Delay, in %
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
 
 
 class Traceroute(models.Model):
@@ -441,10 +443,10 @@ class NMProDataPoint(models.Model):
         null=False,
         verbose_name='Server IP address'
     )
-    lat = models.FloatField(default=0,validators=
-        [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=
-        [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
     mode = models.CharField(
         null=False,
         max_length=10,
