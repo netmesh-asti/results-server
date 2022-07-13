@@ -35,7 +35,7 @@ services:
     depends_on:
       - netmeshapp
     ports:
-      - 7000:8000
+      - 80:8000
     volumes:
       - static-data:/vol/static
 
