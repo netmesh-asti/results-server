@@ -1,31 +1,36 @@
 FROM python:3.10.2-alpine
-LABEL DOST-ASTI SSED
-
+LABEL maintainer="jeanjay.quitayen@asti.dost.gov.ph"
 ENV PYTHONUNBUFFERED 1
-COPY ./requirements.txt /requirements.txt
+
+COPY ./requirements.txt /tmp/requirements.txt
+COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+COPY ./scripts /scripts
+COPY ./app /app
+WORKDIR /app
+EXPOSE 8000
+
+ARG DEV=false
+
 RUN apk add --update --no-cache postgresql-client
 RUN apk add --update --no-cache --virtual .tmp-build-deps \
-	libc-dev linux-headers postgresql-dev
-RUN apk add build-base
-RUN apk add libffi-dev
+        libc-dev build-base libffi-dev linux-headers postgresql-dev \
+        musl-dev zlib zlib-dev && \
+        pip install --upgrade pip && pip install -r /tmp/requirements.txt && \
+        if [ $DEV = "true" ]; \
+            then pip install -r /tmp/requirements.dev.txt ; \
+        fi && \
+        rm -rf /tmp && \
+        apk del .tmp-build-deps && \
+        adduser -D -H netmesh && \
+        mkdir -p /vol/web/media && \
+        mkdir -p /vol/web/static && \
+        chown -R netmesh:netmesh /vol && \
+        chmod -R 755 /vol && \
+        chmod -R +x /scripts
 
-RUN apk add --no-cache \
-			--upgrade \
-		geos \
-		proj \
-		gdal \
-		binutils \
-	&& ln -s /usr/lib/libproj.so.15 /usr/lib/libproj.so \
-	&& ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so \
-	&& ln -s /usr/lib/libgeos_c.so.1 /usr/lib/libgeos_c.so
 
-RUN pip install -r /requirements.txt
+ENV PATH="/scripts:$PATH"
 
-RUN apk del .tmp-build-deps
-
-RUN mkdir /app
-WORKDIR /app
-COPY ./app /app
-
-RUN adduser -D netmesh
 USER netmesh
+
+CMD ["run.sh"]

@@ -17,10 +17,6 @@ services:
       - DB_NAME=netmesh
       - DB_USER=postgres
       - DB_PASS=supersecretpassword
-      - GEO_DB_HOST=geodb
-      - GEO_DB_NAME=geodjango
-      - GEO_DB_USER=geo
-      - GEO_DB_PASS=supersecretpassword
     depends_on:
       - db
   db:
@@ -28,11 +24,4 @@ services:
     environment:
       - POSTGRES_DB=netmesh
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=supersecretpassword
-
-  geodb:
-    image: kartoza/postgis:14-3.2--v2022.02.14
-    environment:
-      - POSTGRES_DB=geodjango
-      - POSTGRES_USER=geo
       - POSTGRES_PASSWORD=supersecretpassword

@@ -1,5 +1,7 @@
 from rest_framework import generics, permissions
 from mobile.serializers import AndroidResultsSerializer
+from rest_framework.authentication import TokenAuthentication
+
 
 from core.models import AndroidResult
 
@@ -12,5 +14,5 @@ class CreateAndroidResView(generics.CreateAPIView):
 
 class ListAndroidResView(generics.ListAPIView):
     serializer_class = AndroidResultsSerializer
-    authentication_classes = []
+    authentication_classes = (TokenAuthentication,)
     queryset = AndroidResult.objects.all()
