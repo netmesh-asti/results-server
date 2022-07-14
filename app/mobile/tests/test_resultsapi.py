@@ -51,7 +51,7 @@ class PublicAndroidApiTests(TestCase):
 
     def test_list_results_no_auth_ok(self):
         res = self.client.get(LIST_CREATE_RESULT_URL, {})
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_list_results_auth_ok(self):
         self.client.force_authenticate(self.user)

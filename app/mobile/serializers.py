@@ -15,6 +15,3 @@ class AndroidResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = AndroidResult
         exclude = ("id", "user",)
-
-    #def create(self, validated_data):
-    #    return AndroidResult.objects.create(**validated_data)

@@ -10,13 +10,7 @@ class CreateAndroidResView(generics.ListCreateAPIView):
     serializer_class = AndroidResultsSerializer
     queryset = AndroidResult.objects.all()
     authentication_classes = (TokenAuthentication,)
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-
-#class ListAndroidResView(generics.ListAPIView):
-#    serializer_class = AndroidResultsSerializer
-#    authentication_classes = (TokenAuthentication,)
-#    queryset = AndroidResult.objects.all()
