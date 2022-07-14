@@ -11,6 +11,10 @@ class RfcResultsSerializer(serializers.ModelSerializer):
 
 class AndroidResultsSerializer(serializers.ModelSerializer):
     """Serializer for the Android Results Object"""
+
     class Meta:
         model = AndroidResult
-        fields = "__all__"
+        exclude = ("id", "user",)
+
+    #def create(self, validated_data):
+    #    return AndroidResult.objects.create(**validated_data)

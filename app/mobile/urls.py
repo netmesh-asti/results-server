@@ -7,9 +7,9 @@ app_name = 'android'
 
 
 urlpatterns = [
-    path('android/store',
+    path('android/',
          views.CreateAndroidResView.as_view(),
-         name='store'
+         name='result'
          ),
-    path('android/list', views.ListAndroidResView.as_view(), name='list')
+    # path('android/list', views.ListAndroidResView.as_view(), name='list')
 ]

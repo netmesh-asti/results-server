@@ -106,3 +106,36 @@ class NtcObjectsTest(TestCase):
         self.assertEqual(fieldtester.ntc_region, 'unknown')
         self.assertEqual(fieldtester.device_kind, 'computer')
         self.assertEqual(fieldtester.device, device)
+
+
+class TestAndroidModel(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email='test@gmail.com',
+            first_name='ntc',
+            last_name='netmesh',
+            password='testpass123'
+        )
+
+    def test_create_result_success(self):
+        android_result = {
+            "phone_model": "Samsung S22",
+            "android_version": "8",
+            "ssid": "WIFI-1",
+            "bssid": "C2sre23",
+            "rssi": 3.1,
+            "network_type": "LTE",
+            "imei": 2566,
+            "cellid": 22,
+            "mcc": 5,
+            "mnc": 15,
+            "tac": 1,
+            "signal_quality": "Strong",
+            "operator": "Smart",
+            "lat": 14.02,
+            "lon": 120.16,
+            "user": self.user
+            }
+        result = models.AndroidResult.objects.create(**android_result)
+        self.assertEqual(result.rssi, 3.1)
+        self.assertEqual(result.user, self.user)

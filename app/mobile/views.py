@@ -6,13 +6,17 @@ from rest_framework.authentication import TokenAuthentication
 from core.models import AndroidResult
 
 
-class CreateAndroidResView(generics.CreateAPIView):
+class CreateAndroidResView(generics.ListCreateAPIView):
     serializer_class = AndroidResultsSerializer
-    permission_classes = (permissions.IsAuthenticated,)
     queryset = AndroidResult.objects.all()
-
-
-class ListAndroidResView(generics.ListAPIView):
-    serializer_class = AndroidResultsSerializer
     authentication_classes = (TokenAuthentication,)
-    queryset = AndroidResult.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+#class ListAndroidResView(generics.ListAPIView):
+#    serializer_class = AndroidResultsSerializer
+#    authentication_classes = (TokenAuthentication,)
+#    queryset = AndroidResult.objects.all()
