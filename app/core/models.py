@@ -132,7 +132,7 @@ class AndroidResult(models.Model):
     cellid = models.CharField(max_length=250, null=True)
     mcc = models.CharField(max_length=250, null=True)
     mnc = models.CharField(max_length=250, null=True)
-    tac = models.IntegerField(null=True)
+    tac = models.CharField(max_length=250, null=True)
     signal_quality = models.CharField(max_length=250, null=True)
     operator = models.CharField(max_length=250, null=True)
     lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
