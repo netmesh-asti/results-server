@@ -7,7 +7,7 @@ app_name = 'mobile'
 
 
 urlpatterns = [
-    path('mobile/',
+    path('result/',
          views.CreateAndroidResView.as_view(),
          name='result'
          ),
