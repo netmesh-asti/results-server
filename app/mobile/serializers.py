@@ -10,8 +10,9 @@ class RfcResultsSerializer(serializers.ModelSerializer):
 
 
 class MobileResultsSerializer(serializers.ModelSerializer):
-    """Serializer for the Android Results Object"""
+    """Serializer for the Mobile Results Object"""
 
     class Meta:
         model = MobileResult
-        exclude = ("id", "user", "created_on",)
+        exclude = ("id", "user",)
+        read_only_fields=('created_on',)

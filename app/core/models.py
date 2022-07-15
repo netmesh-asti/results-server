@@ -82,7 +82,8 @@ class FieldTester(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, blank=True, unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4,
+                            editable=False, blank=True, unique=True)
     ntc_region = models.CharField(
         max_length=20, choices=choices.ntc_region_choices,
         default='unknown'
