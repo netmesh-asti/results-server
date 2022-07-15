@@ -122,27 +122,27 @@ class AndroidDevice(models.Model):
 
 class AndroidResult(models.Model):
     """Android devices for speed testings"""
-    phone_model = models.CharField(max_length=250, null=True)
-    android_version = models.CharField(max_length=100, null=True)
-    ssid = models.CharField(max_length=250, null=True)
-    bssid = models.CharField(max_length=250, null=True)
-    rssi = models.FloatField(null=True)
-    network_type = models.CharField(max_length=20, null=True)
-    imei = models.CharField(max_length=250, null=True)
-    cellid = models.CharField(max_length=250, null=True)
-    mcc = models.CharField(max_length=250, null=True)
-    mnc = models.CharField(max_length=250, null=True)
-    tac = models.CharField(max_length=250, null=True)
+    phone_model = models.CharField(max_length=250, null=True, blank=True)
+    android_version = models.CharField(max_length=100, null=True, blank=True)
+    ssid = models.CharField(max_length=250, null=True, blank=True)
+    bssid = models.CharField(max_length=250, null=True, blank=True)
+    rssi = models.FloatField(null=True, blank=True)
+    network_type = models.CharField(max_length=20, null=True, blank=True)
+    imei = models.CharField(max_length=250, null=True, blank=True)
+    cellid = models.CharField(max_length=250, null=True, blank=True)
+    mcc = models.CharField(max_length=250, null=True, blank=True)
+    mnc = models.CharField(max_length=250, null=True, blank=True)
+    tac = models.CharField(max_length=250, null=True, blank=True)
     signal_quality = models.CharField(max_length=250, null=True)
-    operator = models.CharField(max_length=250, null=True)
+    operator = models.CharField(max_length=250, null=True, blank=True)
     lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
                             MinValueValidator(-90.0)])
     lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
                             MinValueValidator(-180.0)])
-    upload = models.FloatField(default=0, null=True)
-    download = models.FloatField(default=0, null=True)
-    jitter = models.FloatField(default=0, null=True)
-    ping = models.FloatField(default=0, null=True)
+    upload = models.FloatField(default=0, null=True, blank=True)
+    download = models.FloatField(default=0, null=True, blank=True)
+    jitter = models.FloatField(default=0, null=True, blank=True)
+    ping = models.FloatField(default=0, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
 
