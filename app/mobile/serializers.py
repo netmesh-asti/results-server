@@ -1,4 +1,4 @@
-from core.models import RfcResult, AndroidResult
+from core.models import RfcResult, MobileResult
 from rest_framework import serializers
 
 
@@ -9,9 +9,9 @@ class RfcResultsSerializer(serializers.ModelSerializer):
         exclude = (id,)
 
 
-class AndroidResultsSerializer(serializers.ModelSerializer):
+class MobileResultsSerializer(serializers.ModelSerializer):
     """Serializer for the Android Results Object"""
 
     class Meta:
-        model = AndroidResult
-        exclude = ("id", "user",)
+        model = MobileResult
+        exclude = ("id", "user", "created_on",)

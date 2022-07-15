@@ -1,8 +1,13 @@
+from datetime import datetime
+import pytz
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 # from django.urls import reverse
 
+
 from core import models
+
 
 # from rest_framework.test import APIClient
 # from rest_framework import status
@@ -108,7 +113,7 @@ class NtcObjectsTest(TestCase):
         self.assertEqual(fieldtester.device, device)
 
 
-class TestAndroidModel(TestCase):
+class TestMobileModel(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             email='test@gmail.com',
@@ -134,8 +139,10 @@ class TestAndroidModel(TestCase):
             "operator": "Smart",
             "lat": 14.02,
             "lon": 120.16,
+            "timestamp": datetime.now(tz=pytz.UTC),
+            "success": True,
             "user": self.user
             }
-        result = models.AndroidResult.objects.create(**android_result)
+        result = models.MobileResult.objects.create(**android_result)
         self.assertEqual(result.rssi, 3.1)
         self.assertEqual(result.user, self.user)

@@ -3,11 +3,11 @@ from django.urls import path
 from mobile import views
 
 
-app_name = 'android'
+app_name = 'mobile'
 
 
 urlpatterns = [
-    path('android/',
+    path('mobile/',
          views.CreateAndroidResView.as_view(),
          name='result'
          ),

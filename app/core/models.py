@@ -82,7 +82,7 @@ class FieldTester(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE
     )
-    uuid = models.UUIDField(default=uuid.uuid4(), unique=True)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, blank=True, unique=True)
     ntc_region = models.CharField(
         max_length=20, choices=choices.ntc_region_choices,
         default='unknown'
@@ -111,16 +111,16 @@ class FieldTester(models.Model):
             return self.user.username
 
 
-class AndroidDevice(models.Model):
+class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
-    serial_number = models.CharField(max_length=250, null=True)
-    imei = models.IntegerField()
-    phone_model = models.CharField(max_length=250)
+    serial_number = models.CharField(max_length=250, null=True, blank=True)
+    imei = models.CharField(max_length=250, null=True, blank=True)
+    phone_model = models.CharField(max_length=250, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
 
 
-class AndroidResult(models.Model):
+class MobileResult(models.Model):
     """Android devices for speed testings"""
     phone_model = models.CharField(max_length=250, null=True, blank=True)
     android_version = models.CharField(max_length=100, null=True, blank=True)
@@ -143,6 +143,9 @@ class AndroidResult(models.Model):
     download = models.FloatField(default=0, null=True, blank=True)
     jitter = models.FloatField(default=0, null=True, blank=True)
     ping = models.FloatField(default=0, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
+    success = models.BooleanField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
 

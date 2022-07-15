@@ -1,3 +1,6 @@
+from datetime import datetime
+import pytz
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
@@ -5,7 +8,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-LIST_CREATE_RESULT_URL = reverse("android:result")
+
+LIST_CREATE_RESULT_URL = reverse("mobile:result")
 
 
 def create_user(is_admin=False, **params):
@@ -42,6 +46,8 @@ class PublicAndroidApiTests(TestCase):
             "operator": "Smart",
             "lat": 14.02,
             "lon": 120.16,
+            "timestamp": datetime.now(tz=pytz.UTC),
+            "success": True
             }
 
     def test_user_create_result(self):
