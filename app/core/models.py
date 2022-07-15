@@ -128,17 +128,21 @@ class AndroidResult(models.Model):
     bssid = models.CharField(max_length=250, null=True)
     rssi = models.FloatField(null=True)
     network_type = models.CharField(max_length=20, null=True)
-    imei = models.IntegerField(null=True)
-    cellid = models.IntegerField(null=True)
-    mcc = models.IntegerField(null=True)
-    mnc = models.IntegerField(null=True)
+    imei = models.CharField(max_length=250, null=True)
+    cellid = models.CharField(max_length=250, null=True)
+    mcc = models.CharField(max_length=()250, null=True)
+    mnc = models.CharField(max_length=()250, null=True)
     tac = models.IntegerField(null=True)
     signal_quality = models.CharField(max_length=250, null=True)
-    operator = models.CharField(max_length=50, null=True)
+    operator = models.CharField(max_length=250, null=True)
     lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
                             MinValueValidator(-90.0)])
     lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
                             MinValueValidator(-180.0)])
+    upload = models.FloatField(defaul=0)
+    download = models.FloatField(default=0)
+    jitter = models.FloatField(default=0)
+    ping = models.FloatField(default=0)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
 
