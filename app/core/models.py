@@ -130,8 +130,8 @@ class AndroidResult(models.Model):
     network_type = models.CharField(max_length=20, null=True)
     imei = models.CharField(max_length=250, null=True)
     cellid = models.CharField(max_length=250, null=True)
-    mcc = models.CharField(max_length=()250, null=True)
-    mnc = models.CharField(max_length=()250, null=True)
+    mcc = models.CharField(max_length=250, null=True)
+    mnc = models.CharField(max_length=250, null=True)
     tac = models.IntegerField(null=True)
     signal_quality = models.CharField(max_length=250, null=True)
     operator = models.CharField(max_length=250, null=True)
@@ -139,10 +139,10 @@ class AndroidResult(models.Model):
                             MinValueValidator(-90.0)])
     lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
                             MinValueValidator(-180.0)])
-    upload = models.FloatField(defaul=0)
-    download = models.FloatField(default=0)
-    jitter = models.FloatField(default=0)
-    ping = models.FloatField(default=0)
+    upload = models.FloatField(default=0, null=True)
+    download = models.FloatField(default=0, null=True)
+    jitter = models.FloatField(default=0, null=True)
+    ping = models.FloatField(default=0, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
 
