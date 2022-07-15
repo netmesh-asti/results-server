@@ -1,8 +1,7 @@
 from rest_framework import generics, permissions
-from mobile.serializers import MobileResultsSerializer
 from rest_framework.authentication import TokenAuthentication
 
-
+from mobile.serializers import MobileResultsSerializer
 from core.models import MobileResult
 
 

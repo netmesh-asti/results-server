@@ -278,16 +278,14 @@ class Test(models.Model):
 
 class RfcResult(models.Model):
     """
-        Model for an RFC-6349 test datapoint
+        Model for an RFC-6349 test result
     """
+
+    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+
     date_tested = models.DateTimeField(
-        blank=True,
         default=timezone.now
-    )
-    test_id = models.ForeignKey(
-        Test,
-        null=False,
-        on_delete=models.CASCADE
     )
     direction = models.CharField(
         null=False,
@@ -297,57 +295,76 @@ class RfcResult(models.Model):
     )
     server = models.ForeignKey(
         Server,
-        null=False,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE
     )
-    path_mtu = models.IntegerField(
-        null=True
+    mtu = models.IntegerField(
+        null=True,
+        blank=True
     )  # Path Max Transmit Unit, in bytes
-    baseline_rtt = models.FloatField(
-        null=True
+    rtt = models.FloatField(
+        null=True,
+        blank=True
     )  # Baseline Round Trip Time, in ms
-    bottleneck_bw = models.FloatField(
-        null=True
+    bb = models.FloatField(
+        null=True,
+        blank=True
     )  # Bottleneck Bandwidth, in Mbps
     bdp = models.FloatField(
-        null=True
+        null=True,
+        blank=True
     )  # Bandwidth Delay Product, in bits
-    min_rwnd = models.FloatField(
-        null=True
+    rwnd = models.FloatField(
+        null=True,
+        blank=True
     )  # Minimum Receive Window Size, in Kbytes
-    ave_tcp_tput = models.FloatField(
-        null=True
+    thpt_avg = models.FloatField(
+        null=True,
+        blank=True
     )  # Average TCP Throughput, in Mbps
-    ideal_tcp_tput = models.FloatField(
-        null=True
+    thpt_ideal = models.FloatField(
+        null=True,
+        blank=True
     )  # Ideal TCP throughput, in Mbps
-    actual_transfer_time = models.FloatField(
-        null=True
+    transfer_avg= models.FloatField(
+        null=True,
+        blank=True
     )  # Actual Transfer Time, in secs
-    ideal_transfer_time = models.FloatField(
-        null=True
+    transfer_ideal = models.FloatField(
+        null=True,
+        blank=True
     )  # Ideal Transfer Time, in secs
     tcp_ttr = models.FloatField(
-        null=True
+        null=True,
+        blank=True
     )  # TCP transfer Time Ratio, unitless
-    trans_bytes = models.FloatField(
-        null=True
+    tx_bytes = models.FloatField(
+        null=True,
+        blank=True
     )  # Transmitted Bytes, in bytes
-    retrans_bytes = models.FloatField(
-        null=True
+    retx_bytes = models.FloatField(
+        null=True,
+        blank=True
     )  # Retransmitted Bytes, in bytes
     tcp_eff = models.FloatField(
-        null=True
+        null=True,
+        blank=True
     )  # TCP Efficiency, in %
     ave_rtt = models.FloatField(
-        null=True
+        null=True,
+        blank=True
     )  # Average Round Trip Time, in ms
-    buffer_delay = models.FloatField(
-        null=True
+    buf_delay = models.FloatField(
+        null=True,
+        blank=True
     )  # Buffer Delay, in %
+    gps_lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    gps_lon = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    location = models.CharField(max_length=250, null=True)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
 
 
 class Traceroute(models.Model):
