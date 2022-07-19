@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'user',
     'mobile',
     'rfc6349',
+    'server',
     # 'web',
 ]
 

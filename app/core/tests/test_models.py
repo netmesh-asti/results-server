@@ -141,8 +141,31 @@ class TestMobileModel(TestCase):
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
-            "user": self.user
+            "tester": self.user
             }
         result = models.MobileResult.objects.create(**android_result)
         self.assertEqual(result.rssi, 3.1)
-        self.assertEqual(result.user, self.user)
+        self.assertEqual(result.tester, self.user)
+
+
+class ServerModelTests(TestCase):
+    """Test Server Model creation"""
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email='test@gmail.com',
+            first_name='ntc',
+            last_name='netmesh',
+            password='testpass123'
+        )
+
+    def test_create_server_success(self):
+        data = {
+                "ip_address": "192.168.1.1",
+                "server_type": "local",
+                "lat": 14,
+                "lon": 120,
+                "contributor": self.user
+        }
+        server = models.Server.objects.create(**data)
+        self.assertEqual(server.ip_address, data['ip_address'])

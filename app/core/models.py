@@ -147,8 +147,8 @@ class MobileResult(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     timestamp = models.DateTimeField()
     success = models.BooleanField()
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
+                               on_delete=models.CASCADE)
 
 
 class IPaddress(models.Model):
@@ -164,14 +164,12 @@ class IPaddress(models.Model):
     city = models.CharField(max_length=50)
     zip_code = models.CharField(max_length=10)
     pcap = models.CharField(max_length=100, null=True)
-    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
-                            MinValueValidator(-180.0)])
-    # lat = models.FloatField(default=0,validators=
-    # [MaxValueValidator(90.0), MinValueValidator(-90.0)])
-    # long = models.FloatField(default=0, validators=
-    # [MaxValueValidator(180.0), MinValueValidator(-180.0)])
+    lat = models.FloatField(default=0,
+                            validators=[MaxValueValidator(90.0),
+                                        MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0,
+                            validators=[MaxValueValidator(180.0),
+                                        MinValueValidator(-180.0)])
     timezone = models.CharField(
         max_length=50, default='Asia/Manila',
         choices=choices.timezone_choices
@@ -228,6 +226,9 @@ class Server(models.Model):
         default="https://netmesh-web.asti.dost.gov.ph/"
     )
 
+    contributor = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                    on_delete=models.CASCADE)
+
     def __str__(self):
         return "Server %s (%s)" % (self.nickname, self.uuid)
 
@@ -282,7 +283,7 @@ class RfcResult(models.Model):
     """
 
     tester = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+                               on_delete=models.CASCADE)
 
     date_tested = models.DateTimeField(
         default=timezone.now
@@ -327,7 +328,7 @@ class RfcResult(models.Model):
         null=True,
         blank=True
     )  # Ideal TCP throughput, in Mbps
-    transfer_avg= models.FloatField(
+    transfer_avg = models.FloatField(
         null=True,
         blank=True
     )  # Actual Transfer Time, in secs
@@ -359,12 +360,13 @@ class RfcResult(models.Model):
         null=True,
         blank=True
     )  # Buffer Delay, in %
-    gps_lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
-    gps_lon = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
+    gps_lat = models.FloatField(default=0,
+                                validators=[MaxValueValidator(90.0),
+                                            MinValueValidator(-90.0)])
+    gps_lon = models.FloatField(default=0,
+                                validators=[MaxValueValidator(180.0),
+                                            MinValueValidator(-180.0)])
     location = models.CharField(max_length=250, null=True)
-
 
 
 class Traceroute(models.Model):

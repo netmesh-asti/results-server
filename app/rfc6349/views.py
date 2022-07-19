@@ -1,14 +1,13 @@
 from rest_framework import generics, permissions
 from rest_framework.authentication import TokenAuthentication
 
-from mobile.serializers import MobileResultsSerializer
-from core.models import MobileResult
+from core.models import RfcResult
+from rfc6349.serializers import Rfc6349ResultSerializer
 
 
-class CreateAndroidResView(generics.ListCreateAPIView):
-    """View for Android Speed Test Results"""
-    queryset = MobileResult.objects.all()
-    serializer_class = MobileResultsSerializer
+class Rfc6349ResView(generics.ListCreateAPIView):
+    serializer_class = Rfc6349ResultSerializer
+    queryset = RfcResult.objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 

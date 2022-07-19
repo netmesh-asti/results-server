@@ -1,4 +1,4 @@
-from core.models import RfcResult, MobileResult
+from core.models import MobileResult
 from rest_framework import serializers
 
 
@@ -7,5 +7,5 @@ class MobileResultsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MobileResult
-        exclude = ("id", "user",)
-        read_only_fields=('created_on',)
+        exclude = ('id', 'tester',)
+        read_only_fields = ('created_on',)
