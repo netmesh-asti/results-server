@@ -150,7 +150,7 @@ class MobileResult(models.Model):
     test_id = models.UUIDField(
         default=uuid.uuid4,
         null=True,
-        editable=False
+        editable=False,
         blank=True,
         unique=True
     )
