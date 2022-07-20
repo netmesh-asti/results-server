@@ -147,6 +147,11 @@ class MobileResult(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     timestamp = models.DateTimeField()
     success = models.BooleanField()
+    test_id = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True
+    )
     tester = models.ForeignKey(settings.AUTH_USER_MODEL,
                                on_delete=models.CASCADE)
 
