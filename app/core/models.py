@@ -148,7 +148,9 @@ class MobileResult(models.Model):
     timestamp = models.DateTimeField()
     success = models.BooleanField()
     test_id = models.UUIDField(
+        default=uuid.uuid4,
         null=True,
+        editable=False
         blank=True,
         unique=True
     )
