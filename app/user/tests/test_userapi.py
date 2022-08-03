@@ -5,6 +5,8 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from durin.models import Client, AuthToken
+
 CREATE_USER_URL = reverse("user:create")
 RETRIEVE_USER_URL = reverse("user:profile")
 RETRIEVE_FIELD_TESTER_URL = reverse("user:account")
@@ -23,29 +25,29 @@ class AdminUserApiTests(TestCase):
 
     def setUp(self):
         self.user_info = {
-                    "email": "test@gmail.com",
+                    "email": "test@example.com",
                     "password": "test123",
                     "first_name": "netmesh",
                     "last_name": "tester"
                 }
-        self.normal_user = create_user(**self.user_info)
+        self.user = create_user(**self.user_info)
         self.admin_user = create_user(is_admin=True, **self.user_info)
         self.client = APIClient()
 
-    def test_not_authenticated_create_account_forbidden(self):
+    def test_not_authenticated_create_account_fail(self):
         """Test that create user returns unauthorized if not authenticated"""
         res = self.client.post(CREATE_USER_URL, {})
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_not_admin_create_account_forbidden(self):
-        self.client.force_authenticate(user=self.normal_user)
+        self.client.force_authenticate(user=self.user)
         res = self.client.post(CREATE_USER_URL, {})
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_create_valid_user_success(self):
         """test admin can create valid user successfully"""
         payload = {
-            "email": "fieldtester@gmail.com",
+            "email": "fieldtester@example.com",
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester",
@@ -64,10 +66,10 @@ class AdminUserApiTests(TestCase):
         # only admin are allowed to update
         self.client.force_authenticate(user=self.admin_user)
         res = self.client.get(RETRIEVE_FIELD_TESTER_URL, {'email':
-                                                          'test@gmail.com'})
+                                                          'test@example.com'})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data,
-                         {"email": "test@gmail.com",
+                         {"email": "test@example.com",
                           "first_name": "netmesh",
                           "last_name": "tester"})
 
@@ -85,7 +87,7 @@ class AdminUserApiTests(TestCase):
                               {'email': 'none@gmail.com'})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_get_token_no_credentials_400(self):
+    def test_get_token_no_credentials_fail(self):
         """test login without credentials raises 400 Bad Request"""
         res = self.client.post(GET_TOKEN_URL, {})
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
@@ -93,15 +95,18 @@ class AdminUserApiTests(TestCase):
     def test_get_token_bad_credentials_400(self):
         """test login with wrong credentials raises 400 Bad Request"""
         res = self.client.post(GET_TOKEN_URL, {
-            "email": "test@gmail.com",
+            "email": self,
             "password": "wrong_pass",
             })
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_token_valid_user_ok(self):
         """test that token is returned"""
+        client = Client.objects.create(name="test_client")
+        AuthToken.objects.create(client=client, user=self.user)
         res = self.client.post(GET_TOKEN_URL, {
-                    "email": "test@gmail.com",
+                    "email": "test@example.com",
+                    "client": "test_client",
                     "password": "test123",
             })
         self.assertEqual(res.status_code, status.HTTP_200_OK)

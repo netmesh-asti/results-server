@@ -11,7 +11,11 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
+
+from rest_framework.settings import api_settings
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,15 +47,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
+    'django_extensions',
     'drf_spectacular',
-    'rest_framework.authtoken',
+    'rest_framework',
     'core',
     'user',
     'mobile',
     'rfc6349',
     'server',
-    # 'web',
+    'durin',
 ]
 
 MIDDLEWARE = [
@@ -149,7 +153,23 @@ AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
         'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+        'DEFAULT_AUTHENTICATION_CLASSES': ['durin.auth.TokenAuthentication'],
         'DEFAULT_PERMISSION_CLASSES': [
                 'rest_framework.permissions.IsAuthenticatedOrReadOnly'
             ],
+        'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer']
         }
+
+REST_DURIN = {
+        "DEFAULT_TOKEN_TTL": timedelta(days=1),
+        "TOKEN_CHARACTER_LENGTH": 64,
+        "USER_SERIALIZER": None,
+        "AUTH_HEADER_PREFIX": "Token",
+        "EXPIRY_DATETIME_FORMAT": api_settings.DATETIME_FORMAT,
+        "TOKEN_CACHE_TIMEOUT": 60,
+        "REFRESH_TOKEN_ON_LOGIN": False,
+        "AUTHTOKEN_SELECT_RELATED_LIST": ["user"],
+        "API_ACCESS_CLIENT_NAME": None,
+        "API_ACCESS_EXCLUDE_FROM_SESSIONS": False,
+        "API_ACCESS_RESPONSE_INCLUDE_TOKEN": False,
+}

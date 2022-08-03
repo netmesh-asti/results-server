@@ -4,8 +4,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, authentication, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 
-from user.serializers import UserSerializer, AuthTokenSerializer
+from durin.views import APIAccessTokenView, LoginView
+from durin.auth import TokenAuthentication
+from durin import serializers as durin_serializer
+
+from user.serializers import UserSerializer, UserTokenSerializer
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -14,6 +19,7 @@ class CreateUserView(generics.CreateAPIView):
     permission_classes = (
         permissions.IsAdminUser,
     )
+    authentication_classes = (TokenAuthentication,)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
@@ -40,8 +46,23 @@ class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
         obj = get_object_or_404(queryset, email=email)
         return obj
 
+class AuthTokenView(LoginView):
+    serializer_class = UserTokenSerializer
 
-class CreateTokenView(ObtainAuthToken):
-    """Create A new Authtoken for the user"""
-    serializer_class = AuthTokenSerializer
-    rederer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+    @staticmethod
+    def validate_and_return_user(request):
+        request.data._mutable = True
+        try:
+            request.data['username'] = request.data['email']
+        except KeyError:
+            pass
+        request.data._mutable = False
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data["user"]
+
+    def get_user_serializer_class(self, *args, **kwargs):
+        """
+        Do not include user details when fetching token
+        """
+        return None

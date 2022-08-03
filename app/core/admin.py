@@ -26,9 +26,7 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.RfcDevice)
-admin.site.register(models.FieldTester)
 admin.site.register(models.MobileDevice)
 admin.site.register(models.MobileResult)
-admin.site.register(models.Test)
 admin.site.register(models.RfcResult)
 admin.site.register(models.Server)

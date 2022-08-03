@@ -6,6 +6,8 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, \
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from django.conf import settings
+
+from durin.models import Client
 from core import choices
 
 
@@ -38,12 +40,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     date_created = models.DateField(auto_now_add=True)
+    ntc_region = models.CharField(
+        max_length=20, choices=choices.ntc_region_choices,
+        default='unknown'
+    )
     timezone = models.CharField(
         max_length=50,
         default='Asia/Manila',
         choices=choices.timezone_choices
     )
     is_ntc = models.BooleanField(default=True)
+    is_field_tester = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
@@ -56,92 +63,80 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class RfcDevice(models.Model):
     """
-        Model for the hardware device used by the RFC-6349 test agents
+        Model for the hardware (pc/laptop) device used by the RFC-6349 test agents
     """
-    device_id = models.UUIDField(default=uuid.uuid4, unique=True)
-    manufacturer = models.CharField(max_length=250, null=True)
-    product = models.CharField(max_length=250, null=True)
-    version = models.FloatField(null=True)
-    serialnumber = models.CharField(max_length=50, null=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True,
-                                on_delete=models.CASCADE)
+    client = models.OneToOneField(Client, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    manufacturer = models.CharField(max_length=250, blank=True)
+    product = models.CharField(max_length=250, blank=True)
+    version = models.CharField(max_length=250, blank=True)
+    serialnumber = models.CharField(max_length=50, blank=True)
+    os = models.CharField(max_length=50, blank=True)
+    kernel = models.CharField(max_length=50, blank=True)
+    ram = models.CharField(max_length=50, blank=True)
+    disk = models.CharField(max_length=50, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    # hash = models.CharField(max_length=64, unique=True, null=False)
 
     class Meta:
         verbose_name = 'RFC6349 Test Device'
         verbose_name_plural = 'RFC6349 Test Devices'
         ordering = ['-id']
-
-
-class FieldTester(models.Model):
-    """
-        Extension of the User model specifically for the test
-    clients (aka  Agents)
-    """
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
-    uuid = models.UUIDField(default=uuid.uuid4,
-                            editable=False, blank=True, unique=True)
-    ntc_region = models.CharField(
-        max_length=20, choices=choices.ntc_region_choices,
-        default='unknown'
-    )
-    device_kind = models.CharField(
-        max_length=20, choices=choices.device_choices,
-        default='computer'
-    )
-    registration_status = models.CharField(
-        max_length=20, choices=choices.registration_choices,
-        default='unregistered'
-    )
-    device = models.ForeignKey(
-        RfcDevice,
-        null=False,
-        on_delete=models.CASCADE
-    )
+        constraints = [
+            models.UniqueConstraint(fields=['user','serialnumber'],
+                                    name="unique rfc device")
+            ]
 
     def __str__(self):
-        return "%s" % self.user.username
-
-    def display_name(self):
-        if self.user.get_short_name():
-            return self.user.get_short_name()
-        else:
-            return self.user.username
+        return f"{self.user.email}<{self.serialnumber}>"
 
 
 class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
-    serial_number = models.CharField(max_length=250, null=True, blank=True)
-    imei = models.CharField(max_length=250, null=True, blank=True)
-    phone_model = models.CharField(max_length=250, null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,
-                             on_delete=models.CASCADE)
+    client = models.OneToOneField(Client, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    serial_number = models.CharField(max_length=250, blank=True)
+    imei = models.CharField(max_length=250, blank=True)
+    phone_model = models.CharField(max_length=250, blank=True)
+    android_version = models.CharField(max_length=100, blank=True)
+    ram = models.CharField(max_length=250, blank=True)
+    storage = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "serial_number"],
+                                    name="unique mobile device")
+                       ]
+
+    def __str__(self):
+        return f"{self.user.email}<{self.serial_number}>"
 
 
 class MobileResult(models.Model):
-    """Android devices for speed testings"""
-    phone_model = models.CharField(max_length=250, null=True, blank=True)
-    android_version = models.CharField(max_length=100, null=True, blank=True)
-    ssid = models.CharField(max_length=250, null=True, blank=True)
-    bssid = models.CharField(max_length=250, null=True, blank=True)
+    """Mobile Device Speed test result"""
+    android_version = models.CharField(max_length=100, blank=True)
+    ssid = models.CharField(max_length=250, blank=True)
+    bssid = models.CharField(max_length=250, blank=True)
     rssi = models.FloatField(null=True, blank=True)
-    network_type = models.CharField(max_length=20, null=True, blank=True)
-    imei = models.CharField(max_length=250, null=True, blank=True)
-    cellid = models.CharField(max_length=250, null=True, blank=True)
-    mcc = models.CharField(max_length=250, null=True, blank=True)
-    mnc = models.CharField(max_length=250, null=True, blank=True)
-    tac = models.CharField(max_length=250, null=True, blank=True)
-    signal_quality = models.CharField(max_length=250, null=True)
-    operator = models.CharField(max_length=250, null=True, blank=True)
-    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
+    network_type = models.CharField(max_length=20, blank=True)
+    imei = models.CharField(max_length=250, blank=True)
+    cellid = models.CharField(max_length=250, blank=True)
+    mcc = models.CharField(max_length=250, blank=True)
+    mnc = models.CharField(max_length=250, blank=True)
+    tac = models.CharField(max_length=250, blank=True)
+    signal_quality = models.CharField(max_length=250, blank=True)
+    operator = models.CharField(max_length=250, blank=True)
+    lat = models.FloatField(default=0,
+                            null=True,
+                            blank=True,
+                            validators=[MaxValueValidator(90.0),
                             MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
+    lon = models.FloatField(default=0,
+                            null=True,
+                            blank=True,
+                            validators=[MaxValueValidator(180.0),
                             MinValueValidator(-180.0)])
-    upload = models.FloatField(default=0, null=True, blank=True)
-    download = models.FloatField(default=0, null=True, blank=True)
+    upload = models.FloatField(default=0, blank=True)
+    download = models.FloatField(default=0, blank=True)
     jitter = models.FloatField(default=0, null=True, blank=True)
     ping = models.FloatField(default=0, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -154,8 +149,15 @@ class MobileResult(models.Model):
         blank=True,
         unique=True
     )
-    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               on_delete=models.CASCADE)
+    test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['timestamp', 'test_device'], name="unique mobile results")
+
+            ]
 
 
 class IPaddress(models.Model):
@@ -192,8 +194,8 @@ class IPaddress(models.Model):
 
 class Server(models.Model):
     """
-        Model for a NetMesh test server
-        The same model is used for both RFC-6349 test servers  \
+    Model for a NetMesh test server
+    The same model is used for both RFC-6349 test servers  \
     and Web-based speedtest servers
     """
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -240,140 +242,59 @@ class Server(models.Model):
         return "Server %s (%s)" % (self.nickname, self.uuid)
 
 
-class Test(models.Model):
-
-    """
-        Model to represent results from an RFC-6349 Test
-        Each test can contain multiple datapoints
-        (i.e. forward, reverse).
-    """
-    id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4,
-        editable=False
-    )
-    tester = models.ForeignKey(
-        FieldTester, null=False,
-        on_delete=models.CASCADE
-    )
-    ip_address = models.ForeignKey(
-        IPaddress,
-        on_delete=models.CASCADE
-    )
-    test_type = models.CharField(
-        null=False, max_length=50,
-        choices=choices.test_type_choices
-    )
-    date_created = models.DateTimeField(auto_now_add=True)
-    network_connection = models.CharField(
-        max_length=20,
-        null=False,
-        default='unknown'
-    )
-    pcap = models.CharField(max_length=100, null=True)
-    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
-                            MinValueValidator(-180.0)])
-    mode = models.CharField(
-        null=False, max_length=50,
-        choices=choices.test_mode_choices,
-        default='unknown'
-    )
-
-    def __str__(self):
-        return "Test %s" % self.id
-
-
 class RfcResult(models.Model):
     """
         Model for an RFC-6349 test result
     """
-
-    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               on_delete=models.CASCADE)
-
-    date_tested = models.DateTimeField(
-        default=timezone.now
+    test_id = models.UUIDField(default=uuid.uuid4,
+        editable=False,
+        blank=True,
+        unique=True
     )
+    device = models.ForeignKey(RfcDevice, on_delete=models.CASCADE)
     direction = models.CharField(
         null=False,
         max_length=10,
         choices=choices.direction_choices,
         default='unknown'
     )
-    server = models.ForeignKey(
-        Server,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE
-    )
-    mtu = models.IntegerField(
-        null=True,
-        blank=True
-    )  # Path Max Transmit Unit, in bytes
-    rtt = models.FloatField(
-        null=True,
-        blank=True
-    )  # Baseline Round Trip Time, in ms
-    bb = models.FloatField(
-        null=True,
-        blank=True
-    )  # Bottleneck Bandwidth, in Mbps
-    bdp = models.FloatField(
-        null=True,
-        blank=True
-    )  # Bandwidth Delay Product, in bits
-    rwnd = models.FloatField(
-        null=True,
-        blank=True
-    )  # Minimum Receive Window Size, in Kbytes
-    thpt_avg = models.FloatField(
-        null=True,
-        blank=True
-    )  # Average TCP Throughput, in Mbps
-    thpt_ideal = models.FloatField(
-        null=True,
-        blank=True
-    )  # Ideal TCP throughput, in Mbps
-    transfer_avg = models.FloatField(
-        null=True,
-        blank=True
-    )  # Actual Transfer Time, in secs
-    transfer_ideal = models.FloatField(
-        null=True,
-        blank=True
-    )  # Ideal Transfer Time, in secs
-    tcp_ttr = models.FloatField(
-        null=True,
-        blank=True
-    )  # TCP transfer Time Ratio, unitless
-    tx_bytes = models.FloatField(
-        null=True,
-        blank=True
-    )  # Transmitted Bytes, in bytes
-    retx_bytes = models.FloatField(
-        null=True,
-        blank=True
-    )  # Retransmitted Bytes, in bytes
-    tcp_eff = models.FloatField(
-        null=True,
-        blank=True
-    )  # TCP Efficiency, in %
-    ave_rtt = models.FloatField(
-        null=True,
-        blank=True
-    )  # Average Round Trip Time, in ms
-    buf_delay = models.FloatField(
-        null=True,
-        blank=True
-    )  # Buffer Delay, in %
-    gps_lat = models.FloatField(default=0,
-                                validators=[MaxValueValidator(90.0),
-                                            MinValueValidator(-90.0)])
-    gps_lon = models.FloatField(default=0,
-                                validators=[MaxValueValidator(180.0),
-                                            MinValueValidator(-180.0)])
-    location = models.CharField(max_length=250, null=True)
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    mtu = models.IntegerField(null=True, blank=True, help_text="bytes")
+    baseline_rtt = models.FloatField(null=True, blank=True, help_text="ms")
+    rtt = models.FloatField(null=True, blank=True, help_text="ms")
+    ave_rtt = models.FloatField(null=True, blank=True)
+    bb = models.FloatField(null=True, blank=True, help_text="bps")
+    bdp = models.FloatField(null=True, blank=True, help_text="bits")
+    rwnd = models.FloatField(null=True, blank=True, help_text="bytes")
+    max_achievable_thpt = models.PositiveBigIntegerField (null=True,blank=True, help_text="bps")
+    actual_thpt = models.PositiveBigIntegerField(null=True, blank=True, help_text="bps")
+    ideal_transfer_time = models.FloatField(null=True, blank=True, help_text="s")
+    acutal_transfer_time = models.FloatField(null=True, blank=True, help_text="s")
+    transfer_time_ratio = models.FloatField(null=True, blank=True, help_text="unitless")
+    tcp_efficiency = models.FloatField(null=True, blank=True, help_text="%")
+    buffer_delay = models.FloatField(null=True, blank=True, help_text="unitless")
+    tx_bytes = models.FloatField(null=True, blank=True)
+    iperf_version = models.CharField(max_length=250,blank=True)
+    sndbuf_actual = models.CharField(max_length=250,blank=True)
+    rcvbuf_actual = models.CharField(max_length=250,blank=True)
+    transfer_bytes = models.PositiveBigIntegerField(null=True, blank=True)
+    retransmit_bytes = models.PositiveBigIntegerField(null=True, blank=True)
+    sender_tcp_congestion = models.CharField(max_length=10, blank=True)
+    receiver_tcp_congestion = models.CharField(max_length=10, blank=True)
+    host_system_util = models.FloatField(null=True, blank=True, help_text="% utilization")
+    remote_system_util = models.FloatField(null=True, blank=True, help_text="% utilization")
+    lat = models.FloatField(default=0,
+                            validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0,
+                            validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
+    location = models.CharField(max_length=250, blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.direction}"
 
 
 class Traceroute(models.Model):
@@ -425,9 +346,11 @@ class Speedtest(models.Model):
     date = models.DateTimeField(
         default=timezone.now
     )
+
     test_id = models.UUIDField(
-        null=False,
-        editable=True,
+        default=uuid.uuid4,
+        editable=False,
+        blank=True,
         unique=True
     )
     sid = models.CharField(
@@ -457,151 +380,4 @@ class Speedtest(models.Model):
     )
     download_speed = models.FloatField(
         null=False
-    )
-
-
-class NMProDataPoint(models.Model):
-    """
-        Model for a manually entered NetMaster Pro measurement
-    """
-    date_created = models.DateTimeField(
-        blank=True,
-        default=timezone.now
-    )
-    ip_address = models.GenericIPAddressField(
-        null=False,
-        verbose_name='Client IP address'
-    )
-    server = models.GenericIPAddressField(
-        null=False,
-        verbose_name='Server IP address'
-    )
-    lat = models.FloatField(default=0, validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0, validators=[MaxValueValidator(180.0),
-                            MinValueValidator(-180.0)])
-    mode = models.CharField(
-        null=False,
-        max_length=10,
-        default='unknown',
-        choices=[('auto', 'Auto'),
-                 ('expert', 'Expert'),
-                 ('unknown', 'Unknown')]
-    )
-
-    # Test conditions section
-
-    direction = models.CharField(
-        null=False,
-        max_length=10,
-        choices=choices.direction_choices,
-        default='unknown'
-    )
-    min_rwnd = models.FloatField(
-        null=True,
-        verbose_name='Minimum Receive Window Size',
-        help_text='in bytes'
-    )
-    connections = models.IntegerField(
-        null=True,
-        verbose_name='Connections',
-        help_text='enter number of connections'
-    )
-    bdp = models.FloatField(
-        null=True,
-        verbose_name='Bandwidth Delay Product',
-        help_text='in bytes'
-    )
-    path_mtu = models.IntegerField(
-        null=True,
-        verbose_name='Path MTU',
-        help_text='in bytes'
-    )
-    baseline_rtt = models.FloatField(
-        null=True,
-        verbose_name='Baseline RTT',
-        help_text='in ms'
-    )
-    cir = models.FloatField(
-        null=True,
-        verbose_name='CIR',
-        help_text='in Mbps'
-    )
-    bottleneck_bw = models.FloatField(
-        null=True,
-        verbose_name='Bottleneck Bandwidth',
-        help_text='in Mbps'
-    )
-
-    # TCP throughput section
-    ave_tcp_tput = models.FloatField(
-        null=True,
-        verbose_name='Average TCP Throughput',
-        help_text='in Mbps'
-    )
-    ideal_tcp_tput = models.FloatField(
-        null=True,
-        verbose_name='Ideal TCP throughput',
-        help_text='in Mbps'
-    )
-    threshold = models.FloatField(
-        null=True,
-        verbose_name='Threshold',
-        help_text='in %'
-    )
-
-    # Transfer Time section
-    actual_transfer_time = models.FloatField(
-        null=True,
-        verbose_name='Actual Transfer Time',
-        help_text='in secs'
-    )
-    ideal_transfer_time = models.FloatField(
-        null=True,
-        verbose_name='Ideal Transfer Time',
-        help_text='in secs'
-    )
-    tcp_ttr = models.FloatField(
-        null=True,
-        verbose_name='TCP transfer Time Ratio',
-        help_text='unitless'
-    )
-
-    # Data Transfer section
-    trans_bytes = models.FloatField(
-        null=True,
-        verbose_name='Transmitted Bytes',
-        help_text='in bytes'
-    )
-    retrans_bytes = models.FloatField(
-        null=True,
-        verbose_name='Retransmitted Bytes',
-        help_text='in bytes'
-    )
-    tcp_eff = models.FloatField(
-        null=True,
-        verbose_name='TCP Efficiency',
-        help_text='in %'
-    )
-
-    # RTT Section
-    min_rtt = models.FloatField(
-        null=True,
-        verbose_name='Minimum Round Trip Time',
-        help_text='in ms'
-    )
-    max_rtt = models.FloatField(
-        null=True,
-        verbose_name='Maximum Trip Time',
-        help_text='in ms'
-    )
-    ave_rtt = models.FloatField(
-        null=True,
-        verbose_name='Average Round Trip Time',
-        help_text='in ms'
-    )
-    buffer_delay = models.FloatField(
-        null=True,
-        verbose_name='Buffer Delay',
-        help_text='in %'
     )
