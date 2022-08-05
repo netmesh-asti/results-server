@@ -1,4 +1,3 @@
-from curses import use_default_colors
 from datetime import datetime
 import pytz
 
@@ -119,10 +118,9 @@ class TestMobileModel(TestCase):
         device = models.MobileDevice.objects.create(**device_details)
         self.assertEqual(device.serial_number, device_details['serial_number'])
 
-
-
     def test_create_result_success(self):
-        device = models.MobileDevice.objects.create(client=self.client, user=self.user)
+        device = models.MobileDevice.objects.create(
+            client=self.client, user=self.user)
         android_result = {
             "android_version": "8",
             "ssid": "WIFI-1",

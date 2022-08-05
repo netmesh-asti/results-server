@@ -1,5 +1,4 @@
 from datetime import datetime
-from lib2to3.pgen2 import token
 import pytz
 
 from django.contrib.auth import get_user_model

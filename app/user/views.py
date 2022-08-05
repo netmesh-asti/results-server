@@ -2,13 +2,10 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, authentication, permissions
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.settings import api_settings
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 
-from durin.views import APIAccessTokenView, LoginView
 from durin.auth import TokenAuthentication
-from durin import serializers as durin_serializer
+from durin.views import LoginView
 
 from user.serializers import UserSerializer, UserTokenSerializer
 
@@ -45,6 +42,7 @@ class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
         email = self.request.query_params.get('email')
         obj = get_object_or_404(queryset, email=email)
         return obj
+
 
 class AuthTokenView(LoginView):
     serializer_class = UserTokenSerializer

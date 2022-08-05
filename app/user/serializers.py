@@ -5,6 +5,7 @@ from rest_framework import serializers
 from durin.serializers import APIAccessTokenSerializer
 from durin.models import AuthToken
 
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -48,6 +49,7 @@ class AuthTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authentication')
         attrs['user'] = user
         return attrs
+
 
 class UserTokenSerializer(APIAccessTokenSerializer):
     email = serializers.CharField()

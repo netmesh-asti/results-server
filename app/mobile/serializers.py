@@ -8,4 +8,4 @@ class MobileResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = MobileResult
         exclude = ('id', 'test_device',)
-        read_only_fields = ('created_on','test_id',)
+        read_only_fields = ('created_on', 'test_id',)

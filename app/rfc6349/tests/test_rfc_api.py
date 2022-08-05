@@ -77,14 +77,15 @@ class TestRfcApi(TestCase):
             "ram": "8",
             "disk": "10000",
             "client": self.durin_client,
-            "user": self.user 
+            "user": self.user
             }
         self.client = APIClient()
 
     def test_create_result_success(self):
         """Test that authenticated user can post results"""
-        
-        obj = AuthToken.objects.create(client=self.durin_client, user=self.user)
+        obj = AuthToken.objects.create(
+            client=self.durin_client,
+            user=self.user)
         models.RfcDevice.objects.create(**self.device_details)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RFCRESULT_URL, self.data)
@@ -92,7 +93,6 @@ class TestRfcApi(TestCase):
 
     def test_create_result_anonymous_failure(self):
         """Test that unauthenticated user can't post results"""
-        
         res = self.client.post(LIST_CREATE_RFCRESULT_URL, self.data)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 

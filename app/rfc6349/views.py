@@ -15,9 +15,11 @@ class Rfc6349ResView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        client = AuthToken.objects.select_related('client').get(user=self.request.user).client
+        client = AuthToken.objects.select_related('client').get(
+            user=self.request.user).client
         device = RfcDevice.objects.get(client=client)
         serializer.save(device=device)
+
 
 class RfcDeviceView(generics.ListCreateAPIView):
     serializer_class = RfcDeviceSerializer
