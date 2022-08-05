@@ -8,6 +8,11 @@ from durin.auth import TokenAuthentication
 from durin.views import LoginView
 
 from user.serializers import UserSerializer, UserTokenSerializer
+from core.scheme import DurinTokenScheme
+
+
+class CustomTokenScheme(DurinTokenScheme):
+    pass
 
 
 class CreateUserView(generics.CreateAPIView):
