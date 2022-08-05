@@ -92,7 +92,7 @@ class RfcDevice(models.Model):
             ]
 
     def __str__(self):
-        return f"{self.user.email}<{self.serialnumber}>"
+        return f"{self.user.email}<{self.serial_number}>"
 
 
 class MobileDevice(models.Model):

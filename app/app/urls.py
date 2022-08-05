@@ -18,4 +18,4 @@ urlpatterns = [
     path('api/server/', include('server.urls')),
 ]
 
-urlpatterns += [path('api-auth/', include('rest_framework.urls')), ]
+# urlpatterns += [path('api-auth/', include('rest_framework.urls')), ]
