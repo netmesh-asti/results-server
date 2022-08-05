@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
-from rest_framework.authentication import TokenAuthentication
 
 from durin.models import AuthToken
+from durin.auth import TokenAuthentication
 
 from mobile.serializers import MobileResultsSerializer
 from core.models import MobileResult, MobileDevice
