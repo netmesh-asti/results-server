@@ -1,16 +1,13 @@
+from curses import use_default_colors
 from datetime import datetime
 import pytz
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-# from django.urls import reverse
 
+from durin.models import Client
 
 from core import models
-
-
-# from rest_framework.test import APIClient
-# from rest_framework import status
 
 
 class testUserModel(TestCase):
@@ -71,60 +68,62 @@ class NtcObjectsTest(TestCase):
             last_name='netmesh',
             password='testpass123'
         )
+        self.client = Client.objects.create(name="DjangoTest")
 
     def test_rfc_device(self):
         """Test rfcdevice is created successfuly"""
-        # staff = get_user_model().objects.create_superuser(
-        #    email='admin@gmail.com',
-        #    first_name='admin',
-        #    last_name='netmesh',
-        #    password='testpass123'
-        # )
         device = models.RfcDevice.objects.create(
             manufacturer='MSI',
             product='GF63',
             version='1.0',
-            user=self.user,
+            client=self.client,
+            user=self.user
         )
 
         self.assertEqual(device.manufacturer, 'MSI')
         self.assertEqual(device.product, 'GF63')
         self.assertEqual(device.version, '1.0')
-        self.assertEqual(device.user, self.user)
-
-    def test_field_tester(self):
-        """Test Field Tester Created successfully"""
-
-        device = models.RfcDevice.objects.create(
-            manufacturer='MSI',
-            product='GF63',
-            version='1.0',
-            user=self.user,
-        )
-
-        fieldtester = models.FieldTester.objects.create(
-            user=self.user,
-            device_kind='computer',
-            device=device,
-            )
-        self.assertEqual(fieldtester.user, self.user)
-        self.assertEqual(fieldtester.ntc_region, 'unknown')
-        self.assertEqual(fieldtester.device_kind, 'computer')
-        self.assertEqual(fieldtester.device, device)
+        self.assertEqual(device.client, self.client)
 
 
 class TestMobileModel(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email='test@gmail.com',
+            email='test@example.com',
             first_name='ntc',
             last_name='netmesh',
             password='testpass123'
         )
+        self.server = models.Server.objects.create(
+            **{
+                "ip_address": "192.168.1.1",
+                "server_type": "unknown",
+                "lat": 14,
+                "lon": 120,
+                "contributor_id": self.user.id
+            }
+        )
+        self.client = Client.objects.create(name="DjangoTest")
+
+    def test_create_mobiledevice(self):
+        device_details = {
+            "serial_number": "123456",
+            "imei": "43432423432",
+            "phone_model": "Samsung S22",
+            "android_version": "8",
+            "ram": "8",
+            "storage": "10000",
+            "client": self.client,
+            "user": self.user
+        }
+        device = models.MobileDevice.objects.create(**device_details)
+        self.assertEqual(device.serial_number, device_details['serial_number'])
+
+
 
     def test_create_result_success(self):
+        device = models.MobileDevice.objects.create(client=self.client, user=self.user)
         android_result = {
-            "phone_model": "Samsung S22",
             "android_version": "8",
             "ssid": "WIFI-1",
             "bssid": "C2sre23",
@@ -141,11 +140,12 @@ class TestMobileModel(TestCase):
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
-            "tester": self.user
+            "test_device": device,
+            "server_id": self.server.id
             }
-        result = models.MobileResult.objects.create(**android_result)
-        self.assertEqual(result.rssi, 3.1)
-        self.assertEqual(result.tester, self.user)
+        obj = models.MobileResult.objects.create(**android_result)
+        self.assertEqual(obj.rssi, 3.1)
+        self.assertEqual(obj.test_device, device)
 
 
 class ServerModelTests(TestCase):

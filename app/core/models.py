@@ -67,10 +67,11 @@ class RfcDevice(models.Model):
     """
     client = models.OneToOneField(Client, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250, null=False)
     manufacturer = models.CharField(max_length=250, blank=True)
     product = models.CharField(max_length=250, blank=True)
     version = models.CharField(max_length=250, blank=True)
-    serialnumber = models.CharField(max_length=50, blank=True)
+    serial_number = models.CharField(max_length=50, blank=True)
     os = models.CharField(max_length=50, blank=True)
     kernel = models.CharField(max_length=50, blank=True)
     ram = models.CharField(max_length=50, blank=True)
@@ -82,7 +83,7 @@ class RfcDevice(models.Model):
         verbose_name_plural = 'RFC6349 Test Devices'
         ordering = ['-id']
         constraints = [
-            models.UniqueConstraint(fields=['user','serialnumber'],
+            models.UniqueConstraint(fields=['user','serial_number','name'],
                                     name="unique rfc device")
             ]
 
@@ -109,87 +110,6 @@ class MobileDevice(models.Model):
 
     def __str__(self):
         return f"{self.user.email}<{self.serial_number}>"
-
-
-class MobileResult(models.Model):
-    """Mobile Device Speed test result"""
-    android_version = models.CharField(max_length=100, blank=True)
-    ssid = models.CharField(max_length=250, blank=True)
-    bssid = models.CharField(max_length=250, blank=True)
-    rssi = models.FloatField(null=True, blank=True)
-    network_type = models.CharField(max_length=20, blank=True)
-    imei = models.CharField(max_length=250, blank=True)
-    cellid = models.CharField(max_length=250, blank=True)
-    mcc = models.CharField(max_length=250, blank=True)
-    mnc = models.CharField(max_length=250, blank=True)
-    tac = models.CharField(max_length=250, blank=True)
-    signal_quality = models.CharField(max_length=250, blank=True)
-    operator = models.CharField(max_length=250, blank=True)
-    lat = models.FloatField(default=0,
-                            null=True,
-                            blank=True,
-                            validators=[MaxValueValidator(90.0),
-                            MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0,
-                            null=True,
-                            blank=True,
-                            validators=[MaxValueValidator(180.0),
-                            MinValueValidator(-180.0)])
-    upload = models.FloatField(default=0, blank=True)
-    download = models.FloatField(default=0, blank=True)
-    jitter = models.FloatField(default=0, null=True, blank=True)
-    ping = models.FloatField(default=0, null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True)
-    timestamp = models.DateTimeField()
-    success = models.BooleanField()
-    test_id = models.UUIDField(
-        default=uuid.uuid4,
-        null=True,
-        editable=False,
-        blank=True,
-        unique=True
-    )
-    test_device = models.ForeignKey(MobileDevice,
-                                    on_delete=models.CASCADE)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['timestamp', 'test_device'], name="unique mobile results")
-
-            ]
-
-
-class IPaddress(models.Model):
-    """
-        Model for IP addresses containing its geolocation & ISP data
-    """
-    date = models.DateTimeField(default=timezone.now)
-    ip_address = models.GenericIPAddressField(null=False)
-    country = models.CharField(max_length=50)
-    country_code = models.CharField(max_length=10)
-    region = models.CharField(max_length=50)
-    region_name = models.CharField(max_length=50)
-    city = models.CharField(max_length=50)
-    zip_code = models.CharField(max_length=10)
-    pcap = models.CharField(max_length=100, null=True)
-    lat = models.FloatField(default=0,
-                            validators=[MaxValueValidator(90.0),
-                                        MinValueValidator(-90.0)])
-    lon = models.FloatField(default=0,
-                            validators=[MaxValueValidator(180.0),
-                                        MinValueValidator(-180.0)])
-    timezone = models.CharField(
-        max_length=50, default='Asia/Manila',
-        choices=choices.timezone_choices
-    )
-    isp = models.CharField(max_length=100)
-    org = models.CharField(max_length=100)
-    as_num = models.CharField(max_length=100)
-    as_name = models.CharField(max_length=100)
-    reverse = models.CharField(max_length=200)
-    mobile = models.BooleanField(default=False)
-    proxy = models.BooleanField(default=False)
 
 
 class Server(models.Model):
@@ -234,12 +154,100 @@ class Server(models.Model):
         max_length=500,
         default="https://netmesh-web.asti.dost.gov.ph/"
     )
+    url = models.URLField(
+        max_length=500,
+        default="https://netmesh-web.asti.dost.gov.ph/speedtest"
+    )
 
     contributor = models.ForeignKey(settings.AUTH_USER_MODEL,
                                     on_delete=models.CASCADE)
 
     def __str__(self):
-        return "Server %s (%s)" % (self.nickname, self.uuid)
+        return "%s (%s)" % (self.nickname, self.uuid)
+
+
+class MobileResult(models.Model):
+    """Mobile Device Speed test result"""
+    android_version = models.CharField(max_length=100, blank=True)
+    ssid = models.CharField(max_length=250, blank=True)
+    bssid = models.CharField(max_length=250, blank=True)
+    rssi = models.FloatField(null=True, blank=True)
+    network_type = models.CharField(max_length=20, blank=True)
+    imei = models.CharField(max_length=250, blank=True)
+    cellid = models.CharField(max_length=250, blank=True)
+    mcc = models.CharField(max_length=250, blank=True)
+    mnc = models.CharField(max_length=250, blank=True)
+    tac = models.CharField(max_length=250, blank=True)
+    signal_quality = models.CharField(max_length=250, blank=True)
+    operator = models.CharField(max_length=250, blank=True)
+    lat = models.FloatField(default=0,
+                            null=True,
+                            blank=True,
+                            validators=[MaxValueValidator(90.0),
+                            MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0,
+                            null=True,
+                            blank=True,
+                            validators=[MaxValueValidator(180.0),
+                            MinValueValidator(-180.0)])
+    upload = models.FloatField(default=0, blank=True)
+    download = models.FloatField(default=0, blank=True)
+    jitter = models.FloatField(default=0, null=True, blank=True)
+    ping = models.FloatField(default=0, null=True, blank=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField()
+    success = models.BooleanField()
+    test_id = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        editable=False,
+        blank=True,
+        unique=True
+    )
+    test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)
+
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['timestamp', 'test_device'], name="unique mobile results")
+
+            ]
+
+
+class IPaddress(models.Model):
+    """
+        Model for IP addresses containing its geolocation & ISP data
+    """
+    date = models.DateTimeField(default=timezone.now)
+    ip_address = models.GenericIPAddressField(null=False)
+    country = models.CharField(max_length=50)
+    country_code = models.CharField(max_length=10)
+    region = models.CharField(max_length=50)
+    region_name = models.CharField(max_length=50)
+    city = models.CharField(max_length=50)
+    zip_code = models.CharField(max_length=10)
+    pcap = models.CharField(max_length=100, null=True)
+    lat = models.FloatField(default=0,
+                            validators=[MaxValueValidator(90.0),
+                                        MinValueValidator(-90.0)])
+    lon = models.FloatField(default=0,
+                            validators=[MaxValueValidator(180.0),
+                                        MinValueValidator(-180.0)])
+    timezone = models.CharField(
+        max_length=50, default='Asia/Manila',
+        choices=choices.timezone_choices
+    )
+    isp = models.CharField(max_length=100)
+    org = models.CharField(max_length=100)
+    as_num = models.CharField(max_length=100)
+    as_name = models.CharField(max_length=100)
+    reverse = models.CharField(max_length=200)
+    mobile = models.BooleanField(default=False)
+    proxy = models.BooleanField(default=False)
+
+
 
 
 class RfcResult(models.Model):

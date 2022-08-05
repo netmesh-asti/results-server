@@ -1,4 +1,5 @@
 from datetime import datetime
+from lib2to3.pgen2 import token
 import pytz
 
 from django.contrib.auth import get_user_model
@@ -7,6 +8,10 @@ from django.test import TestCase
 
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from durin.models import AuthToken, Client
+
+from core.models import MobileDevice, Server
 
 
 LIST_CREATE_RESULT_URL = reverse("mobile:result")
@@ -22,12 +27,21 @@ def create_user(is_admin=False, **params):
 class PublicAndroidApiTests(TestCase):
     def setUp(self):
         self.info = {
-            "email": "netmesh@gmail.com",
+            "email": "netmesh@example.com",
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester"
             }
         self.user = create_user(**self.info)
+        self.server = Server.objects.create(
+            **{
+                "ip_address": "192.168.1.1",
+                "server_type": "unknown",
+                "lat": 14,
+                "lon": 120,
+                "contributor_id": self.user.id
+            }
+        )
         self.client = APIClient()
 
         self.android_result = {
@@ -47,11 +61,26 @@ class PublicAndroidApiTests(TestCase):
             "lat": 14.02,
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
-            "success": True
+            "success": True,
+            "server": self.server.id
             }
 
     def test_user_create_result(self):
-        self.client.force_authenticate(user=self.user)
+        client_name = "TestClient"
+        client = Client.objects.create(name=client_name)
+        device_details = {
+            "serial_number": "123456",
+            "imei": "43432423432",
+            "phone_model": "Samsung S22",
+            "android_version": "8",
+            "ram": "8",
+            "storage": "10000",
+            "client": client,
+            "user": self.user,
+        }
+        MobileDevice.objects.create(**device_details)
+        obj = AuthToken.objects.create(user=self.user, client=client)
+        self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 

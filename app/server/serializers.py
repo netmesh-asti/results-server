@@ -6,4 +6,5 @@ class ServerSerializer(serializers.ModelSerializer):
     """Server model serializer"""
     class Meta:
         model = Server
-        exclude = ('id', 'contributor')
+        exclude = ('contributor',)
+        read_only_fields = ['id']
