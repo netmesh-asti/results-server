@@ -57,6 +57,9 @@ INSTALLED_APPS = [
     'durin',
 ]
 
+if DEBUG:
+    INSTALLED_APPS.insert(0,'django_extensions')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
