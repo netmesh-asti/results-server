@@ -53,12 +53,12 @@ class AuthTokenView(LoginView):
             request.data._mutable = True
             request.data['username'] = request.data['email']
             request.data._mutable = False
-        except (KeyError, AttributeError):
+        except (AttributeError, KeyError):
             request.data['username'] = request.data['email']
-
-        serializer = AuthTokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return serializer.validated_data["user"]
+        finally:
+            serializer = AuthTokenSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            return serializer.validated_data["user"]
 
     def get_user_serializer_class(self, *args, **kwargs):
         """
