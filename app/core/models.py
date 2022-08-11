@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.conf import settings
 
 from durin.models import Client
+
 from core import choices
 
 
@@ -180,7 +181,7 @@ class MobileResult(models.Model):
     rssi = models.FloatField(null=True, blank=True)
     network_type = models.CharField(max_length=20, blank=True)
     imei = models.CharField(max_length=250, blank=True)
-    cellid = models.CharField(max_length=250, blank=True)
+    cell_id = models.CharField(max_length=250, blank=True)
     mcc = models.CharField(max_length=250, blank=True)
     mnc = models.CharField(max_length=250, blank=True)
     tac = models.CharField(max_length=250, blank=True)
