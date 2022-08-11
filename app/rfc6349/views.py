@@ -29,7 +29,7 @@ class RfcDeviceView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         name = self.request.data['name']
-        device_user = self.request.data['user_id']
+        device_user = self.request.data['user']
         user = get_user_model().objects.get(id=device_user)
         client = Client.objects.create(name=name)
         AuthToken.objects.create(client=client, user=user)
