@@ -128,7 +128,7 @@ class TestMobileModel(TestCase):
             "rssi": 3.1,
             "network_type": "LTE",
             "imei": 2566,
-            "cellid": 22,
+            "cell_id": 22,
             "mcc": 5,
             "mnc": 15,
             "tac": 1,
