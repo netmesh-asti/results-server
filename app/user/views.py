@@ -2,12 +2,14 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, authentication, permissions
-from rest_framework.authtoken.serializers import AuthTokenSerializer
 
 from durin.auth import TokenAuthentication
 from durin.views import LoginView
 
-from user.serializers import UserSerializer, UserTokenSerializer
+
+from user.serializers import (
+    UserSerializer,
+    AuthTokenSerializer)
 from core.scheme import DurinTokenScheme
 
 
@@ -15,8 +17,8 @@ class CustomTokenScheme(DurinTokenScheme):
     pass
 
 
-class CreateUserView(generics.CreateAPIView):
-    """Create a new user in the system"""
+class CreateUserView(generics.ListCreateAPIView):
+    """List or Create a new user in the system"""
     serializer_class = UserSerializer
     permission_classes = (
         permissions.IsAdminUser,
@@ -25,7 +27,7 @@ class CreateUserView(generics.CreateAPIView):
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
-    """list and allow update user information"""
+    """Retrieve and allow update user information"""
     serializer_class = UserSerializer
     authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
