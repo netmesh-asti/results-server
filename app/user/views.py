@@ -52,22 +52,20 @@ class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
 
 
 class AuthTokenView(LoginView):
-    serializer_class = UserTokenSerializer
+    serializer_class = AuthTokenSerializer
 
     @staticmethod
     def validate_and_return_user(request):
-        try:
-            request.data._mutable = True
-            request.data['username'] = request.data['email']
-            request.data._mutable = False
-        except (AttributeError, KeyError):
-            request.data['username'] = request.data['email']
-        finally:
-            serializer = AuthTokenSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            return serializer.validated_data["user"]
+        """
+        Authenticate user using email instead of username
+        @param request:
+        @return: Any
+        """
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return serializer.validated_data["user"]
 
-    def get_user_serializer_class(self, *args, **kwargs):
+    def get_user_serializer_class(self):
         """
         Do not include user details when fetching token
         """
