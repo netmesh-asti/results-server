@@ -108,7 +108,7 @@ class TestRfcApi(TestCase):
             "kernel": "5.15",
             "ram": "8",
             "disk": "10000",
-            "user_id": self.user.id
+            "user": self.user.id
             }
         self.client.force_authenticate(user=self.admin)
         res = self.client.post(LIST_CREATE_RFCDEVICE_URL, device)

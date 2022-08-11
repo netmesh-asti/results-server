@@ -13,8 +13,7 @@ class Rfc6349ResultSerializer(serializers.ModelSerializer):
 
 class RfcDeviceSerializer(serializers.ModelSerializer):
     """Serializer fro RFC Test Devices"""
-
     class Meta:
         model = RfcDevice
-        exclude = ("client", "user",)
+        exclude = ("client",)
         read_only_fields = ("date_created",)
