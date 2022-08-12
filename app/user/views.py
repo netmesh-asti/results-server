@@ -6,10 +6,17 @@ from rest_framework import generics, authentication, permissions
 from durin.auth import TokenAuthentication
 from durin.views import LoginView
 
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiExample)
+from drf_spectacular.types import OpenApiTypes
+
 
 from user.serializers import (
     UserSerializer,
     ListUsersSerializer,
+    ListUserRequestSerializer,
     AuthTokenSerializer)
 from core.scheme import DurinTokenScheme
 
@@ -35,9 +42,21 @@ class ListUsersView(generics.ListAPIView):
     )
     authentication_classes = (TokenAuthentication,)
 
+    @extend_schema(
+        parameters=[
+            ListUserRequestSerializer,
+            OpenApiParameter("ntc_region", ListUserRequestSerializer),
+        ],
+        request=ListUserRequestSerializer,
+        responses=ListUsersSerializer,
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
     def get_queryset(self):
         """return users from a region"""
         region = self.request.query_params['ntc_region']
+        print(region)
         return get_user_model().objects.filter(ntc_region=region)
 
 

@@ -24,8 +24,16 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class ListUserRequestSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ("ntc_region",)
+
+
 class ListUsersSerializer(serializers.ModelSerializer):
     """Serializer for listing all users"""
+
     def update(self, instance, validated_data):
         pass
 
@@ -34,7 +42,8 @@ class ListUsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("id", "email", "ntc_region",)
+        fields = ("ntc_region", "id", "email")
+        read_only_fields = ("id", "email",)
 
 
 class AuthTokenSerializer(serializers.Serializer):

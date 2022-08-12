@@ -118,7 +118,8 @@ class AdminUserApiTests(TestCase):
 
     def test_get_users_from_region_success(self):
         """test that only users from selected region is returned"""
-        regions = [region[1] for region in ntc_region_choices]
+        regions = [region[0] for region in ntc_region_choices]
+        print(regions)
         emails = ('user1', 'user2', 'user3', 'user4', 'user5')
         for region, name in zip(regions, emails):
             self.user_info['email'] = f'{name}@example.com'
