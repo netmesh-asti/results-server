@@ -1,3 +1,4 @@
+import json
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -7,10 +8,13 @@ from rest_framework import status
 
 from durin.models import Client, AuthToken
 
+from core.choices import ntc_region_choices
+
 CREATE_USER_URL = reverse("user:create")
 RETRIEVE_USER_URL = reverse("user:profile")
 RETRIEVE_FIELD_TESTER_URL = reverse("user:account")
 GET_TOKEN_URL = reverse("user:token")
+LIST_USERS_URL = reverse("user:users")
 
 
 def create_user(is_admin=False, **params):
@@ -111,3 +115,21 @@ class AdminUserApiTests(TestCase):
             })
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("token", res.data)
+
+    def test_get_users_from_region_success(self):
+        """test that only users from selected region is returned"""
+        regions = [region[1] for region in ntc_region_choices]
+        emails = ('user1', 'user2', 'user3', 'user4', 'user5')
+        for region, name in zip(regions, emails):
+            self.user_info['email'] = f'{name}@example.com'
+            self.user_info['ntc_region'] = region
+            self.new_user = get_user_model().objects.create_user(
+                **self.user_info)
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get(LIST_USERS_URL, data={'ntc_region': regions[1]})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        items_str = json.dumps(res.data)
+        items = json.loads(items_str)
+        ntc_regions = [region['ntc_region'] for region in items]
+        self.assertIn(regions[1], ntc_regions)
+        self.assertNotIn(regions[5], ntc_regions)

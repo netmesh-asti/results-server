@@ -7,7 +7,7 @@ from durin.serializers import APIAccessTokenSerializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'first_name', 'last_name')
+        fields = ('email', 'password', 'first_name', 'last_name',)
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
@@ -22,6 +22,19 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class ListUsersSerializer(serializers.ModelSerializer):
+    """Serializer for listing all users"""
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+    class Meta:
+        model = get_user_model()
+        fields = ("id", "email", "ntc_region",)
 
 
 class AuthTokenSerializer(serializers.Serializer):

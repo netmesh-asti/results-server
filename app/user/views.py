@@ -9,6 +9,7 @@ from durin.views import LoginView
 
 from user.serializers import (
     UserSerializer,
+    ListUsersSerializer,
     AuthTokenSerializer)
 from core.scheme import DurinTokenScheme
 
@@ -17,13 +18,27 @@ class CustomTokenScheme(DurinTokenScheme):
     pass
 
 
-class CreateUserView(generics.ListCreateAPIView):
-    """List or Create a new user in the system"""
+class CreateUserView(generics.CreateAPIView):
+    """Create a new user in the system"""
     serializer_class = UserSerializer
     permission_classes = (
         permissions.IsAdminUser,
     )
     authentication_classes = (TokenAuthentication,)
+
+
+class ListUsersView(generics.ListAPIView):
+    """List all users"""
+    serializer_class = ListUsersSerializer
+    permission_classes = (
+        permissions.IsAdminUser,
+    )
+    authentication_classes = (TokenAuthentication,)
+
+    def get_queryset(self):
+        """return users from a region"""
+        region = self.request.query_params['ntc_region']
+        return get_user_model().objects.filter(ntc_region=region)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
