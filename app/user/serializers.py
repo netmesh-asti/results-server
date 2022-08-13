@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
-from durin.serializers import APIAccessTokenSerializer
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -76,16 +74,3 @@ class AuthTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authentication')
         attrs['user'] = user
         return attrs
-
-
-class UserTokenSerializer(APIAccessTokenSerializer):
-    email = serializers.CharField()
-    client = serializers.CharField()
-    password = serializers.CharField(
-        style={'input_type': 'password'},
-        trim_whitespace=False
-    )
-
-    def get_field_names(self, declared_fields, info):
-        print(declared_fields)
-        return super().get_field_names(declared_fields, info)

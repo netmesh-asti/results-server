@@ -1,17 +1,20 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from durin.models import AuthToken
+from durin.settings import durin_settings
 
-from rest_framework import generics, authentication, permissions
+from rest_framework import (
+    generics,
+    authentication,
+    permissions,)
+from rest_framework.exceptions import ValidationError
 
 from durin.auth import TokenAuthentication
 from durin.views import LoginView
-
+from durin.models import Client
 from drf_spectacular.utils import (
     extend_schema,
-    OpenApiParameter,
-    OpenApiExample)
-from drf_spectacular.types import OpenApiTypes
-
+    OpenApiParameter,)
 
 from user.serializers import (
     UserSerializer,
@@ -98,6 +101,23 @@ class AuthTokenView(LoginView):
         serializer = AuthTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return serializer.validated_data["user"]
+
+    def get_token_obj(self, request, client: Client):
+        """
+        Flow used to return the :class:`durin.models.AuthToken` object.
+        """
+        try:
+            # if a token for this user-client pair already exists,
+            # we can just return it
+            token = AuthToken.objects.get(user=request.user, client=client)
+            if durin_settings.REFRESH_TOKEN_ON_LOGIN:
+                self.renew_token(request=request, token=token)
+        except AuthToken.DoesNotExist:
+            # Do not assign token to user <--> client
+            raise ValidationError(
+                {"detail": "No client linked with this account."})
+
+        return token
 
     def get_user_serializer_class(self):
         """
