@@ -12,7 +12,7 @@ class Rfc6349ResultSerializer(serializers.ModelSerializer):
 
 
 class RfcDeviceSerializer(serializers.ModelSerializer):
-    """Serializer fro RFC Test Devices"""
+    """Serializer from RFC Test Devices"""
     class Meta:
         model = RfcDevice
         exclude = ("client",)
