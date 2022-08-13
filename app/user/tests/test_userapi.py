@@ -66,7 +66,7 @@ class AdminUserApiTests(TestCase):
         self.assertNotIn('password', res.data)
 
     def test_retrieve_update_user_success(self):
-        """test that admin can fetch fieldtester and update"""
+        """test that admin can fetch field tester and update"""
         # only admin are allowed to update
         self.client.force_authenticate(user=self.admin_user)
         res = self.client.get(RETRIEVE_FIELD_TESTER_URL, {'email':
@@ -119,7 +119,6 @@ class AdminUserApiTests(TestCase):
     def test_get_users_from_region_success(self):
         """test that only users from selected region is returned"""
         regions = [region[0] for region in ntc_region_choices]
-        print(regions)
         emails = ('user1', 'user2', 'user3', 'user4', 'user5')
         for region, name in zip(regions, emails):
             self.user_info['email'] = f'{name}@example.com'
