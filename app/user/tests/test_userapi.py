@@ -37,6 +37,13 @@ class AdminUserApiTests(TestCase):
                 }
         self.user = create_user(**self.user_info)
         self.admin_user = create_user(is_admin=True, **self.user_info)
+        self.regions = [region[0] for region in ntc_region_choices]
+        emails = ('user1', 'user2', 'user3', 'user4', 'user5')
+        for region, name in zip(self.regions, emails):
+            self.user_info['email'] = f'{name}@example.com'
+            self.user_info['ntc_region'] = region
+            self.new_user = get_user_model().objects.create_user(
+                **self.user_info)
         self.client = APIClient()
 
     def test_not_authenticated_create_account_fail(self):
@@ -120,18 +127,33 @@ class AdminUserApiTests(TestCase):
 
     def test_get_users_from_region_success(self):
         """test that only users from selected region is returned"""
-        regions = [region[0] for region in ntc_region_choices]
-        emails = ('user1', 'user2', 'user3', 'user4', 'user5')
-        for region, name in zip(regions, emails):
-            self.user_info['email'] = f'{name}@example.com'
-            self.user_info['ntc_region'] = region
-            self.new_user = get_user_model().objects.create_user(
-                **self.user_info)
+
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(LIST_USERS_URL, data={'ntc_region': regions[1]})
+        res = self.client.get(LIST_USERS_URL,
+                              data={'ntc_region': self.regions[1]})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         items_str = json.dumps(res.data)
         items = json.loads(items_str)
         ntc_regions = [region['ntc_region'] for region in items]
-        self.assertIn(regions[1], ntc_regions)
-        self.assertNotIn(regions[5], ntc_regions)
+        self.assertIn(self.regions[1], ntc_regions)
+        self.assertNotIn(self.regions[5], ntc_regions)
+
+    def test_get_users_no_admin_in_list(self):
+        """test that no admin in the list"""
+        emails = ('admin1', 'admin2', 'admin3', 'admin4', 'admin5')
+        for region, name in zip(self.regions, emails):
+            self.user_info['email'] = f'{name}@example.com'
+            self.user_info['is_staff'] = True
+            self.user_info['ntc_region'] = region
+            self.new_user = get_user_model().objects.create_user(
+                **self.user_info)
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get(LIST_USERS_URL,
+                              data={'ntc_region': self.regions[1]})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        items_str = json.dumps(res.data)
+        items = json.loads(items_str)
+        ntc_users = [region['email'] for region in items]
+        for email in ntc_users:
+            user = get_user_model().objects.get(email=email)
+            self.assertFalse(user.is_staff)

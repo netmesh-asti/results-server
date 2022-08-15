@@ -59,7 +59,8 @@ class ListUsersView(generics.ListAPIView):
     def get_queryset(self):
         """return users from a region"""
         region = self.request.query_params['ntc_region']
-        return get_user_model().objects.filter(ntc_region=region)
+        return get_user_model().objects.filter(
+            ntc_region=region).filter(is_staff=False)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
