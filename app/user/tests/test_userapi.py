@@ -32,7 +32,8 @@ class AdminUserApiTests(TestCase):
                     "email": "test@example.com",
                     "password": "test123",
                     "first_name": "netmesh",
-                    "last_name": "tester"
+                    "last_name": "tester",
+                    "ntc_region": "unknown"
                 }
         self.user = create_user(**self.user_info)
         self.admin_user = create_user(is_admin=True, **self.user_info)
@@ -75,7 +76,8 @@ class AdminUserApiTests(TestCase):
         self.assertEqual(res.data,
                          {"email": "test@example.com",
                           "first_name": "netmesh",
-                          "last_name": "tester"})
+                          "last_name": "tester",
+                          "ntc_region": "unknown"})
 
         # Update User Profile
         res = self.client.patch(RETRIEVE_USER_URL,
