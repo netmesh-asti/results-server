@@ -40,8 +40,7 @@ class ListUsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("ntc_region", "id", "email")
-        read_only_fields = ("id", "email",)
+        fields = ("id", "ntc_region", "email", 'first_name', 'last_name')
 
 
 class AuthTokenSerializer(serializers.Serializer):
