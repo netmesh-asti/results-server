@@ -63,7 +63,7 @@ class AdminUserApiTests(TestCase):
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester",
-            }
+        }
 
         # only admins are allowed to create/update field testers
         self.client.force_authenticate(user=self.admin_user)
@@ -125,6 +125,17 @@ class AdminUserApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("token", res.data)
 
+    def test_list_users_success(self):
+        """test that only users from selected region is returned"""
+
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get(LIST_USERS_URL,
+                              data={'ntc_region': self.regions[1]})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        items_str = json.dumps(res.data)
+        items = json.loads(items_str)
+        self.assertIn('first_name', items[0])
+
     def test_get_users_from_region_success(self):
         """test that only users from selected region is returned"""
 
@@ -136,7 +147,7 @@ class AdminUserApiTests(TestCase):
         items = json.loads(items_str)
         ntc_regions = [region['ntc_region'] for region in items]
         self.assertIn(self.regions[1], ntc_regions)
-        self.assertNotIn(self.regions[5], ntc_regions)
+        self.assertNotIn(self.regions[2], ntc_regions)
 
     def test_get_users_no_admin_in_list(self):
         """test that no admin in the list"""
