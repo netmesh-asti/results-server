@@ -11,7 +11,7 @@ from durin.models import Client, AuthToken
 from core.choices import ntc_region_choices
 
 CREATE_USER_URL = reverse("user:create")
-RETRIEVE_USER_URL = reverse("user:profile")
+RETRIEVE_USER_URL = reverse("user:manage")
 RETRIEVE_FIELD_TESTER_URL = reverse("user:account")
 GET_TOKEN_URL = reverse("user:token")
 LIST_USERS_URL = reverse("user:users")
@@ -88,10 +88,10 @@ class AdminUserApiTests(TestCase):
 
         # Update User Profile
         res = self.client.patch(RETRIEVE_USER_URL,
-                                {"first_name": "asti"})
+                                {"first_name": "TestName"})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         user = get_user_model().objects.get(**res.data)
-        self.assertEqual('asti', user.first_name)
+        self.assertEqual('TestName', user.first_name)
 
     def test_retrieve_not_found_404(self):
         """test that retrieving not found user return 404"""

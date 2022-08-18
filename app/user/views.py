@@ -1,26 +1,28 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from durin.models import AuthToken
-from durin.settings import durin_settings
-
+from rest_framework.exceptions import ValidationError
 from rest_framework import (
     generics,
-    authentication,
     permissions,)
-from rest_framework.exceptions import ValidationError
 
-from durin.auth import TokenAuthentication
-from durin.views import LoginView
-from durin.models import Client
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,)
 
+from durin.models import AuthToken
+from durin.settings import durin_settings
+from durin.auth import TokenAuthentication
+from durin.views import LoginView
+from durin.models import Client
+
 from user.serializers import (
     UserSerializer,
+    RetrieveUserSerializer,
+    RetrieveUserRequestSerializer,
     ListUsersSerializer,
     ListUserRequestSerializer,
     AuthTokenSerializer)
+
 from core.scheme import DurinTokenScheme
 
 
@@ -65,19 +67,29 @@ class ListUsersView(generics.ListAPIView):
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """Retrieve and allow update user information"""
-    serializer_class = UserSerializer
-    authentication_classes = (authentication.TokenAuthentication,)
-    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = RetrieveUserSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (permissions.IsAdminUser,)
 
     def get_object(self):
         """Retrieve and return authenticated user"""
         return self.request.user
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("email", RetrieveUserRequestSerializer),
+        ],
+        request=RetrieveUserRequestSerializer,
+        responses=RetrieveUserSerializer,
+    )
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
 
 class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
     """list and allow update field tester information"""
     serializer_class = UserSerializer
-    authentication_classes = (authentication.TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,
                           permissions.IsAdminUser,)
 
@@ -123,4 +135,4 @@ class AuthTokenView(LoginView):
         """
         Do not include user details when fetching token
         """
-        return None
+        return UserSerializer

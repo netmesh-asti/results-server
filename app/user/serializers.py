@@ -22,6 +22,21 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class RetrieveUserRequestSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ('email',)
+
+
+class RetrieveUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
+        fields = ("id", 'first_name', 'last_name', "ntc_region", "email")
+        read_only_fields = ("ntc_region",)
+
+
 class ListUserRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
