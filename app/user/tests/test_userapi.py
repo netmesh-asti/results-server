@@ -11,8 +11,8 @@ from durin.models import Client, AuthToken
 from core.choices import ntc_region_choices
 
 CREATE_USER_URL = reverse("user:create")
-RETRIEVE_USER_URL = reverse("user:profile")
-RETRIEVE_FIELD_TESTER_URL = reverse("user:account")
+RETRIEVE_USER_URL = reverse("user:my-profile")
+RETRIEVE_FIELD_TESTER_URL = reverse("user:manage-account")
 GET_TOKEN_URL = reverse("user:token")
 LIST_USERS_URL = reverse("user:users")
 

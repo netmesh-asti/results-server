@@ -123,4 +123,4 @@ class AuthTokenView(LoginView):
         """
         Do not include user details when fetching token
         """
-        return None
+        return UserSerializer
