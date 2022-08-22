@@ -1,8 +1,6 @@
 from core.models import MobileResult, MobileDevice
 from rest_framework import serializers
 
-from server.serializers import ServerSerializer
-
 
 class MobileDeviceSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""
