@@ -61,7 +61,7 @@ class PublicAndroidApiTests(TestCase):
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
-            "server": self.server.id
+            "server_id": self.server.id
             }
 
     def test_user_create_result(self):
