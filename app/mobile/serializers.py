@@ -1,13 +1,21 @@
-from core.models import MobileResult
+from core.models import MobileResult, MobileDevice
 from rest_framework import serializers
+
+from server.serializers import ServerSerializer
+
+
+class MobileDeviceSerializer(serializers.ModelSerializer):
+    """Serializer for the Mobile Results Object"""
+    class Meta:
+        model = MobileDevice
+        exclude = ('id', 'client', 'user', 'ram', 'storage')
 
 
 class MobileResultsSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""
-    server_id = serializers.IntegerField()
+    device = MobileDeviceSerializer(read_only=True)
 
     class Meta:
         model = MobileResult
         exclude = ('id', 'test_device',)
         read_only_fields = ('created_on', 'test_id',)
-        depth = 1
