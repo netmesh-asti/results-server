@@ -63,10 +63,8 @@ class PublicAndroidApiTests(TestCase):
             "success": True,
             "server": self.server.id
             }
-
-    def test_user_create_result(self):
         client_name = "TestClient"
-        client = Client.objects.create(name=client_name)
+        self.test_client = Client.objects.create(name=client_name)
         device_details = {
             "serial_number": "123456",
             "imei": "43432423432",
@@ -74,14 +72,32 @@ class PublicAndroidApiTests(TestCase):
             "android_version": "8",
             "ram": "8",
             "storage": "10000",
-            "client": client,
+            "client": self.test_client,
             "user": self.user,
         }
         MobileDevice.objects.create(**device_details)
-        obj = AuthToken.objects.create(user=self.user, client=client)
+
+    def test_user_create_result(self):
+        """Test user create results success"""
+        obj = AuthToken.objects.create(user=self.user, client=self.test_client)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    def test_list_result_has_test_result(self):
+        """Test that listing results has actual result"""
+        obj = AuthToken.objects.create(user=self.user, client=self.test_client)
+        self.client.force_authenticate(user=self.user, token=obj.token)
+        res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
+        res = self.client.get(LIST_CREATE_RESULT_URL, {})
+        self.assertIn('test_id', res.data[0])
+
+    def test_list_result_has_device(self):
+        obj = AuthToken.objects.create(user=self.user, client=self.test_client)
+        self.client.force_authenticate(user=self.user, token=obj.token)
+        res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
+        res = self.client.get(LIST_CREATE_RESULT_URL, {})
+        self.assertIn('test_device', res.data[0])
 
     def test_list_results_no_auth_ok(self):
         res = self.client.get(LIST_CREATE_RESULT_URL, {})
