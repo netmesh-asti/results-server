@@ -24,7 +24,7 @@ def create_user(is_admin=False, **params):
     return get_user_model().objects.create_user(**params)
 
 
-class AdminUserApiTests(TestCase):
+class AdminUserAPITests(TestCase):
     """Test Create User API (NTC)"""
 
     def setUp(self):
@@ -168,3 +168,28 @@ class AdminUserApiTests(TestCase):
         for email in ntc_users:
             user = get_user_model().objects.get(email=email)
             self.assertFalse(user.is_staff)
+
+
+class TestFieldUserAPITests(TestCase):
+
+    def setUp(self):
+        self.user_info = {
+            "email": "test@example.com",
+            "password": "test123",
+            "first_name": "netmesh",
+            "last_name": "tester",
+            "ntc_region": "unknown"
+        }
+        self.user = create_user(**self.user_info)
+        self.client = APIClient()
+
+    def test_retrieve_profile_success(self):
+        """Test that field user can retrieve profile."""
+
+        # client = Client.objects.create(name="test_client")
+        # AuthToken.objects.create(client=client, user=self.user)
+        # token = AuthToken.objects.get(user=self.user).token
+        self.client.force_authenticate(user=self.user)
+        res = self.client.get(RETRIEVE_USER_URL, {
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)

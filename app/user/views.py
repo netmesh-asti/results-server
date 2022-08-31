@@ -1,17 +1,15 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from durin.models import AuthToken
-from durin.settings import durin_settings
 
 from rest_framework import (
     generics,
-    authentication,
     permissions,)
 from rest_framework.exceptions import ValidationError
 
+from durin.settings import durin_settings
 from durin.auth import TokenAuthentication
 from durin.views import LoginView
-from durin.models import Client
+from durin.models import Client, AuthToken
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiParameter,)
@@ -66,7 +64,7 @@ class ListUsersView(generics.ListAPIView):
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """Retrieve and allow update user information"""
     serializer_class = UserSerializer
-    authentication_classes = (authentication.TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
@@ -77,7 +75,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
     """list and allow update field tester information"""
     serializer_class = UserSerializer
-    authentication_classes = (authentication.TokenAuthentication,)
+    authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,
                           permissions.IsAdminUser,)
 
