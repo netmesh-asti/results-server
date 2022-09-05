@@ -87,6 +87,7 @@ class TestRfcApi(TestCase):
             client=self.durin_client,
             user=self.user)
         models.RfcDevice.objects.create(**self.device_details)
+        self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RFCRESULT_URL, self.data)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -95,6 +96,22 @@ class TestRfcApi(TestCase):
         """Test that unauthenticated user can't post results"""
         res = self.client.post(LIST_CREATE_RFCRESULT_URL, self.data)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_user_has_multiple_tokens_success(self):
+        """Test that user can create result with correct client."""
+        durin_client_2nd = Client.objects.create(name="TestClient2")
+
+        obj = AuthToken.objects.create(
+            client=self.durin_client,
+            user=self.user)
+        AuthToken.objects.create(
+            client=durin_client_2nd,
+            user=self.user)
+        models.RfcDevice.objects.create(**self.device_details)
+        self.client.credentials(Authorization='Token ' + obj.token)
+        self.client.force_authenticate(user=self.user, token=obj.token)
+        res = self.client.post(LIST_CREATE_RFCRESULT_URL, self.data)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
     def test_create_device_success(self):
         """Test that admin can create device for user"""
