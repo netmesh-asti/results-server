@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'drf_spectacular',
     'rest_framework',
+    'corsheaders',
     'core',
     'user',
     'mobile',
@@ -47,12 +48,14 @@ if DEBUG:
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -142,17 +145,19 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer']
 }
-
+TEST_CLIENT_NAME = "NETMESH_WEB"
 REST_DURIN = {
-    "DEFAULT_TOKEN_TTL": timedelta(days=1),
+    "DEFAULT_TOKEN_TTL": timedelta(days=100),
     "TOKEN_CHARACTER_LENGTH": 64,
     "USER_SERIALIZER": None,
     "AUTH_HEADER_PREFIX": "Token",
     "EXPIRY_DATETIME_FORMAT": api_settings.DATETIME_FORMAT,
     "TOKEN_CACHE_TIMEOUT": 60,
-    "REFRESH_TOKEN_ON_LOGIN": True,
+    "REFRESH_TOKEN_ON_LOGIN": False,
     "AUTHTOKEN_SELECT_RELATED_LIST": ["user"],
-    "API_ACCESS_CLIENT_NAME": None,
+    "API_ACCESS_CLIENT_NAME": TEST_CLIENT_NAME,
     "API_ACCESS_EXCLUDE_FROM_SESSIONS": False,
     "API_ACCESS_RESPONSE_INCLUDE_TOKEN": True,
 }
+
+CORS_ALLOW_ALL_ORIGINS = True

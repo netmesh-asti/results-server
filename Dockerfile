@@ -25,6 +25,7 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps \
         mkdir -p /vol/web/media && \
         mkdir -p /vol/web/static && \
         chown -R netmesh:netmesh /vol && \
+        chown -R netmesh:netmesh /usr/local/lib/python3.10/site-packages/durin/migrations/ && \
         chmod -R 755 /vol && \
         chmod -R +x /scripts
 
