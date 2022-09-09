@@ -22,6 +22,7 @@ from user.serializers import (
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
 
+
 class CustomTokenScheme(DurinTokenScheme):
     pass
 
@@ -35,9 +36,10 @@ class CreateUserView(generics.CreateAPIView):
     authentication_classes = (TokenAuthentication,)
 
     def perform_create(self, serializer):
-        c = Client.objects.get(name=TEST_CLIENT_NAME)
-        AuthToken.objects.create(client=c, user=self.request.user)
         serializer.save()
+        c = Client.objects.get(name=TEST_CLIENT_NAME)
+        user = get_user_model().objects.get(email=self.request.data['email'])
+        AuthToken.objects.create(client=c, user=user)
 
 
 class ListUsersView(generics.ListAPIView):
