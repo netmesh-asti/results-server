@@ -80,6 +80,7 @@ class PublicAndroidApiTests(TestCase):
     def test_user_create_result(self):
         """Test user create results success"""
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
+        self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -87,6 +88,7 @@ class PublicAndroidApiTests(TestCase):
     def test_list_result_has_test_result(self):
         """Test that listing results has actual result"""
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
+        self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         res = self.client.get(LIST_CREATE_RESULT_URL, {})
@@ -94,6 +96,7 @@ class PublicAndroidApiTests(TestCase):
 
     def test_list_result_has_device(self):
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
+        self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         res = self.client.get(LIST_CREATE_RESULT_URL, {})

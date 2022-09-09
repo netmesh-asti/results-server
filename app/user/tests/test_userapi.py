@@ -8,6 +8,7 @@ from rest_framework import status
 
 from durin.models import Client, AuthToken
 
+from app.settings import TEST_CLIENT_NAME
 from core.choices import ntc_region_choices
 
 CREATE_USER_URL = reverse("user:create")
@@ -45,6 +46,7 @@ class AdminUserAPITests(TestCase):
             self.new_user = get_user_model().objects.create_user(
                 **self.user_info)
         self.client = APIClient()
+        Client.objects.create(name=TEST_CLIENT_NAME)
 
     def test_not_authenticated_create_account_fail(self):
         """Test that create user returns unauthorized if not authenticated"""
@@ -182,6 +184,7 @@ class TestFieldUserAPITests(TestCase):
         }
         self.user = create_user(**self.user_info)
         self.client = APIClient()
+        Client.objects.create(name=TEST_CLIENT_NAME)
 
     def test_retrieve_profile_success(self):
         """Test that field user can retrieve profile."""

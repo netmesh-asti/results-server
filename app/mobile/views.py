@@ -19,7 +19,9 @@ class CreateAndroidResView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
+        http_auth_token = self.request.META.get('Authorization')
+        token = http_auth_token.replace(" ", '').replace('Token', '')
         client = AuthToken.objects.select_related('client').get(
-            token=self.request.auth).client
+            token=token).client
         device = MobileDevice.objects.get(client=client)
         serializer.save(test_device=device)
