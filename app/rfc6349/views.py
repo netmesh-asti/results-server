@@ -15,8 +15,7 @@ class Rfc6349ResView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        http_auth_token = self.request.META.get('Authorization')
-        token = http_auth_token.replace(" ", '').replace('Token', '')
+        token = self.request.auth
         client = AuthToken.objects.select_related('client').get(
             token=token).client
         device = RfcDevice.objects.get(client=client)
