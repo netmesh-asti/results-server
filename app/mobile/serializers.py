@@ -1,4 +1,9 @@
-from core.models import MobileResult, MobileDevice
+from core.models import (
+    MobileResult,
+    MobileDevice,
+    NTCSpeedTest,
+)
+
 from rest_framework import serializers
 
 
@@ -17,3 +22,12 @@ class MobileResultsSerializer(serializers.ModelSerializer):
         model = MobileResult
         exclude = ('id',)
         read_only_fields = ('created_on', 'test_id', )
+
+
+class NtcMobileResultsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = NTCSpeedTest
+        fields = "__all__"
+        read_only_fields = (
+            'date_created', 'result', 'test_device', 'id', 'test_id')
