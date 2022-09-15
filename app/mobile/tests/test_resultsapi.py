@@ -16,6 +16,7 @@ from core.models import MobileDevice, Server
 LIST_CREATE_RESULT_URL = reverse("mobile:result")
 LIST_NTC_RESULTS_URL = reverse("mobile:ntcmobile")
 
+
 def create_user(is_admin=False, **params):
     if is_admin:
         params['email'] = 'super@gmail.com'
