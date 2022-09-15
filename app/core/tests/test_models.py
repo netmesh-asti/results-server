@@ -138,12 +138,10 @@ class TestMobileModel(TestCase):
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
-            "test_device": device,
             "server_id": self.server.id
             }
         obj = models.MobileResult.objects.create(**android_result)
         self.assertEqual(obj.rssi, 3.1)
-        self.assertEqual(obj.test_device, device)
 
 
 class ServerModelTests(TestCase):
