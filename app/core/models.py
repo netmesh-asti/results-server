@@ -205,25 +205,14 @@ class MobileResult(models.Model):
     download = models.FloatField(default=0, blank=True)
     jitter = models.FloatField(default=0, null=True, blank=True)
     ping = models.FloatField(default=0, null=True, blank=True)
-    created_on = models.DateTimeField(auto_now_add=True)
     timestamp = models.DateTimeField()
     success = models.BooleanField()
-    test_id = models.UUIDField(
-        default=uuid.uuid4,
-        null=True,
-        editable=False,
-        blank=True,
-        unique=True
-    )
-    test_device = models.ForeignKey(MobileDevice,
-                                    on_delete=models.CASCADE)
-
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['timestamp', 'test_device'],
+                fields=['timestamp', 'server'],
                 name="unique mobile results")
             ]
 
@@ -421,3 +410,33 @@ class Speedtest(models.Model):
     download_speed = models.FloatField(
         null=False
     )
+
+
+class PublicSpeedTest(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    result = models.ForeignKey(MobileResult, on_delete=models.CASCADE)
+    test_id = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        editable=False,
+        blank=True,
+        unique=True
+    )
+
+
+class NTCSpeedTest(models.Model):
+    date_created = models.DateTimeField(auto_now_add=True)
+    result = models.ForeignKey(MobileResult, on_delete=models.CASCADE)
+    test_id = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        editable=False,
+        blank=True,
+        unique=True
+    )
+    region = models.CharField(
+        max_length=20, choices=choices.ntc_region_choices,
+        default='unknown'
+    )
+    test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)

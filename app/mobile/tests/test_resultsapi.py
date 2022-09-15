@@ -14,7 +14,7 @@ from core.models import MobileDevice, Server
 
 
 LIST_CREATE_RESULT_URL = reverse("mobile:result")
-
+LIST_NTC_RESULTS_URL = reverse("mobile:ntcmobile")
 
 def create_user(is_admin=False, **params):
     if is_admin:
@@ -92,19 +92,20 @@ class PublicAndroidApiTests(TestCase):
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         res = self.client.get(LIST_CREATE_RESULT_URL, {})
-        self.assertIn('test_id', res.data[0])
+        self.assertIn('timestamp', res.data[0])
 
     def test_list_result_has_device(self):
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
         self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
-        res = self.client.get(LIST_CREATE_RESULT_URL, {})
+        res = self.client.get(LIST_NTC_RESULTS_URL, {})
         self.assertIn('test_device', res.data[0])
 
-    def test_list_results_no_auth_ok(self):
+    def test_list_results_no_auth_fail(self):
+        """Test that listing NTC mobile results requires authentication"""
         res = self.client.get(LIST_CREATE_RESULT_URL, {})
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_list_results_auth_ok(self):
         self.client.force_authenticate(self.user)
