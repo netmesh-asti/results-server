@@ -22,7 +22,7 @@ urlpatterns = [
     path('userntcresultdetail/<test_id>',
          views.RetrieveUserMobileResultDetail.as_view(),
          name='userntcmobiledetail'
-         ),     
+         ),
     path('mobiledevicelist/',
          views.ListUserMobileDevices.as_view(),
          name='mobiledevicelist'
@@ -30,6 +30,6 @@ urlpatterns = [
     path('mobiledevicedetail/<serial_number>',
          views.RetrieveUserMobileDeviceDetail.as_view(),
          name='mobiledevicedetail'
-         ),     
+         ),
     # path('android/list', views.ListAndroidResView.as_view(), name='list')
 ]

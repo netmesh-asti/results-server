@@ -46,8 +46,6 @@ class ListNtcMobileTestsView(generics.ListAPIView):
     authentication_classes = (TokenAuthentication, )
 
 
-
-
 class SelfListNtcMobileTestsView(generics.ListAPIView):
     serializer_class = NtcMobileResultsSerializer
     permission_classes = (permissions.IsAuthenticated, )
@@ -58,15 +56,15 @@ class SelfListNtcMobileTestsView(generics.ListAPIView):
         print(user)
         return NTCSpeedTest.objects.filter(test_device__user=user)
 
+
 class RetrieveUserMobileResultDetail(generics.RetrieveAPIView):
     serializer_class = NtcMobileResultsSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = [permissions.IsAuthenticated,]
+    permission_classes = [permissions.IsAuthenticated, ]
 
     def get_object(self):
         lookup_field = self.kwargs["test_id"]
-        return get_object_or_404(NTCSpeedTest, test_id=lookup_field)    
-
+        return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
 
 class ListUserMobileDevices(generics.ListAPIView):
@@ -83,10 +81,8 @@ class ListUserMobileDevices(generics.ListAPIView):
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
     serializer_class = MobileDeviceSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = [permissions.IsAuthenticated,]
+    permission_classes = [permissions.IsAuthenticated, ]
 
     def get_object(self):
         lookup_field = self.kwargs["serial_number"]
-        return get_object_or_404(MobileDevice, serial_number=lookup_field)    
-        
-
+        return get_object_or_404(MobileDevice, serial_number=lookup_field)
