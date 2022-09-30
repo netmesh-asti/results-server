@@ -31,3 +31,4 @@ class NtcMobileResultsSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = (
             'date_created', 'result', 'test_device', 'id', 'test_id')
+        depth = 1
