@@ -119,6 +119,17 @@ class TestMobileModel(TestCase):
         self.assertEqual(device.serial_number, device_details['serial_number'])
 
     def test_create_result_success(self):
+        device_details = {
+            "serial_number": "123456",
+            "imei": "43432423432",
+            "phone_model": "Samsung S22",
+            "android_version": "8",
+            "ram": "8",
+            "storage": "10000",
+            "client": self.client,
+            "user": self.user
+        }
+        device = models.MobileDevice.objects.create(**device_details)
         android_result = {
             "android_version": "8",
             "ssid": "WIFI-1",
@@ -136,7 +147,9 @@ class TestMobileModel(TestCase):
             "lon": 120.16,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
-            "server_id": self.server.id
+            "server_id": self.server.id,
+            "tester_id": self.user.id,
+            "test_device_id": device.id
             }
         obj = models.MobileResult.objects.create(**android_result)
         self.assertEqual(obj.rssi, 3.1)
