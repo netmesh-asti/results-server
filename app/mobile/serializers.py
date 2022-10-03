@@ -21,16 +21,13 @@ class MobileResultsSerializer(serializers.ModelSerializer):
     class Meta:
         model = MobileResult
         exclude = ('id',)
-        read_only_fields = ('created_on', 'test_id', 'tester', 'test_device')
+        read_only_fields = ('created_on', 'test_id', )
 
 
 class NtcMobileResultsSerializer(serializers.ModelSerializer):
-    test_device = serializers.ReadOnlyField(
-        source='result.test_device.phone_model')
 
     class Meta:
         model = NTCSpeedTest
         fields = "__all__"
         read_only_fields = (
-            'date_created', 'tester', 'test_device', 'id')
-        depth = 1
+            'date_created', 'result', 'test_device', 'id', 'test_id')

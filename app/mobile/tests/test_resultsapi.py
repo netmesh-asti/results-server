@@ -119,7 +119,7 @@ class PublicAndroidApiTests(TestCase):
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         res = self.client.get(LIST_NTC_RESULTS_URL, {})
-        self.assertIn('test_device', res.data[0]['result'].keys())
+        self.assertIn('test_device', res.data[0].keys())
 
     def test_list_results_no_auth_fail(self):
         """Test that listing NTC mobile results requires authentication"""
