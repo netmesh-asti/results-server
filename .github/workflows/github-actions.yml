@@ -24,7 +24,7 @@ jobs:
     - name: 'Create env file'
       run: |
         touch .env
-        echo API_KEY=${{ secrets.GMAPS_TOKEN }} >> .env
+        echo GMAPS_TOKEN=${{ secrets.GMAPS_TOKEN }} >> .env
         cat .env
     - name: Build the stack
       run: docker-compose up -d
