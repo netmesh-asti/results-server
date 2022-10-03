@@ -36,6 +36,8 @@ class AndroidResultsView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         token = self.request.auth
         if not token:
+            user = get_object_or_404(models.User, email=self.request.user)
+            obj = serializer.save(tester=user, test_device=device)
             obj = serializer.save()
             PublicSpeedTest.objects.create(result_id=obj.id)
         else:

@@ -1,10 +1,9 @@
 import googlemaps
 import os
 
-gmaps = googlemaps.Client(key=os.environ.get('GMAPS_TOKEN'))
-
 
 def get_location(lat, lon):
+    gmaps = googlemaps.Client(key=os.environ.get('GMAPS_TOKEN'))
     data = {'lat': lat, 'lon': lon}
     reverse_geocode_result = gmaps.reverse_geocode(
         (data['lat'],
