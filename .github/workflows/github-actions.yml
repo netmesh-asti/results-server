@@ -21,6 +21,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: 'Create env file'
+      run: |
+        touch .env
+        echo GMAPS_TOKEN=${{ secrets.GMAPS_TOKEN }} >> .env
+        cat .env
     - name: Build the stack
       run: docker-compose up -d
     - name: Start DB
