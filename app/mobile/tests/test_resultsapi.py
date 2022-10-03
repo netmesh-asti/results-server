@@ -10,11 +10,15 @@ from rest_framework.test import APIClient
 
 from durin.models import AuthToken, Client
 
-from core.models import MobileDevice, Server
+from core.models import (
+    MobileDevice,
+    Server,
+    Location
+)
 
 
 LIST_CREATE_RESULT_URL = reverse("mobile:result")
-LIST_NTC_RESULTS_URL = reverse("mobile:ntcmobile")
+LIST_NTC_RESULTS_URL = reverse("mobile:ntc-list")
 
 
 def create_user(is_admin=False, **params):
@@ -58,8 +62,12 @@ class PublicAndroidApiTests(TestCase):
             "tac": 1,
             "signal_quality": "Strong",
             "operator": "Smart",
-            "lat": 14.02,
+            "lat": 15.02,
             "lon": 120.16,
+            "upload": 100000000,
+            "download": 200000000,
+            "jitter": 0.0001,
+            "ping": 0.03,
             "timestamp": datetime.now(tz=pytz.UTC),
             "success": True,
             "server": self.server.id
@@ -78,8 +86,17 @@ class PublicAndroidApiTests(TestCase):
         }
         MobileDevice.objects.create(**device_details)
 
-    def test_user_create_result(self):
+    def test_user_create_result_success(self):
         """Test user create results success"""
+        loc = {
+            "lat": 15.1240083,
+            "lon": 120.6120233,
+            "region": "NCR",
+            "province": "Metro Manila",
+            "municipality": "Quezon City",
+            "barangay": "Krus Na Ligas"
+        }
+        Location.objects.create(**loc)
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
         self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
@@ -96,12 +113,13 @@ class PublicAndroidApiTests(TestCase):
         self.assertIn('timestamp', res.data[0])
 
     def test_list_result_has_device(self):
+        """test that individual result has device id"""
         obj = AuthToken.objects.create(user=self.user, client=self.test_client)
         self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user, token=obj.token)
         res = self.client.post(LIST_CREATE_RESULT_URL, self.android_result)
         res = self.client.get(LIST_NTC_RESULTS_URL, {})
-        self.assertIn('test_device', res.data[0])
+        self.assertIn('test_device', res.data[0]['result'].keys())
 
     def test_list_results_no_auth_fail(self):
         """Test that listing NTC mobile results requires authentication"""

@@ -24,6 +24,13 @@ class UserAdmin(BaseUserAdmin):
             'fields': ('email', 'password1', 'password2')
         }),
     )
+
+
+class ServerAdmin(admin.ModelAdmin):
+    ordering = ['id']
+    list_display = ['id', 'nickname', 'ip_address']
+
+
 # Unregister the original Group admin.
 admin.site.unregister(Group)
 
@@ -44,6 +51,6 @@ admin.site.register(models.RfcDevice)
 admin.site.register(models.MobileDevice)
 admin.site.register(models.MobileResult)
 admin.site.register(models.RfcResult)
-admin.site.register(models.Server)
+admin.site.register(models.Server, ServerAdmin)
 admin.site.register(models.PublicSpeedTest)
 admin.site.register(models.NTCSpeedTest)

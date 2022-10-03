@@ -116,7 +116,7 @@ class MobileDevice(models.Model):
                        ]
 
     def __str__(self):
-        return f"{self.user.email}<{self.serial_number}>"
+        return f"{self.phone_model}<{self.client.name}>"
 
 
 class Server(models.Model):
@@ -208,6 +208,10 @@ class MobileResult(models.Model):
     timestamp = models.DateTimeField()
     success = models.BooleanField()
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
+                               on_delete=models.CASCADE)
+    test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
@@ -215,6 +219,9 @@ class MobileResult(models.Model):
                 fields=['timestamp', 'server'],
                 name="unique mobile results")
             ]
+
+    def __str__(self):
+        return "%s<%s>" % (self.tester, self.test_device)
 
 
 class IPaddress(models.Model):
@@ -424,9 +431,35 @@ class PublicSpeedTest(models.Model):
     )
 
 
+class Barangays(models.Model):
+    psg_id = models.CharField(max_length=250)
+    name = models.CharField(max_length=250)
+
+
+class Location(models.Model):
+    lat = models.FloatField(
+        default=0,
+        validators=[
+            MaxValueValidator(90.0),
+            MinValueValidator(-90.0)])
+    lon = models.FloatField(
+        default=0,
+        validators=[
+            MaxValueValidator(180.0),
+            MinValueValidator(-180.0)])
+    region = models.CharField(max_length=255, default=None)
+    province = models.CharField(max_length=255, default=None)
+    municipality = models.CharField(max_length=255, default=None)
+    barangay = models.CharField(max_length=255, default=None)
+
+    def __str__(self):
+        return "%s, %s, %s" % (self.barangay, self.municipality, self.province)
+
+
 class NTCSpeedTest(models.Model):
-    date_created = models.DateTimeField(auto_now_add=True)
+
     result = models.ForeignKey(MobileResult, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
     test_id = models.UUIDField(
         default=uuid.uuid4,
         null=True,
@@ -434,9 +467,7 @@ class NTCSpeedTest(models.Model):
         blank=True,
         unique=True
     )
-    region = models.CharField(
-        max_length=20, choices=choices.ntc_region_choices,
-        default='unknown'
-    )
-    test_device = models.ForeignKey(MobileDevice,
-                                    on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "%s<%s>" % (self.date_created, self.location.barangay)

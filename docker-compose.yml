@@ -20,6 +20,7 @@ services:
       - DB_USER=postgres
       - DB_PASS=supersecretpassword
       - DEBUG=1
+      - GMAPS_TOKEN=${GMAPS_TOKEN}
     depends_on:
       - db
   db:
