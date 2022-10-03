@@ -36,8 +36,6 @@ class AndroidResultsView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         token = self.request.auth
         if not token:
-            user = get_object_or_404(models.User, email=self.request.user)
-            obj = serializer.save(tester=user, test_device=device)
             obj = serializer.save()
             PublicSpeedTest.objects.create(result_id=obj.id)
         else:
@@ -49,12 +47,16 @@ class AndroidResultsView(generics.ListCreateAPIView):
                     detail="Device not registered to client.",
                     code=HTTP_404_NOT_FOUND)
             user = get_object_or_404(models.User, email=self.request.user)
-            obj = serializer.save(tester=user, test_device=device)
+            obj = serializer.save()
             lat = float(self.request.data.get('lat'))
             lon = float(self.request.data.get('lon'))
             loc = utils.get_location(lat, lon)
             loc = models.Location.objects.create(**loc)
-            NTCSpeedTest.objects.create(result_id=obj.id, location=loc)
+            NTCSpeedTest.objects.create(
+                result_id=obj.id,
+                tester=user,
+                test_device=device,
+                location=loc)
 
 
 class ListNtcMobileTestsView(viewsets.ReadOnlyModelViewSet):
@@ -70,7 +72,7 @@ class ListNtcMobileTestsView(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = NTCSpeedTest.objects.filter(
-            result__tester=self.request.user)
+            tester=self.request.user)
         serializer = NtcMobileResultsSerializer(queryset, many=True)
         return Response(serializer.data)
 

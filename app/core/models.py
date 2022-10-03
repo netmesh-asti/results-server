@@ -208,10 +208,6 @@ class MobileResult(models.Model):
     timestamp = models.DateTimeField()
     success = models.BooleanField()
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
-    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               on_delete=models.CASCADE)
-    test_device = models.ForeignKey(MobileDevice,
-                                    on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
@@ -431,11 +427,6 @@ class PublicSpeedTest(models.Model):
     )
 
 
-class Barangays(models.Model):
-    psg_id = models.CharField(max_length=250)
-    name = models.CharField(max_length=250)
-
-
 class Location(models.Model):
     lat = models.FloatField(
         default=0,
@@ -468,6 +459,10 @@ class NTCSpeedTest(models.Model):
         unique=True
     )
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
+                               on_delete=models.CASCADE)
+    test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
