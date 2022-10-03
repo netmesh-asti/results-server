@@ -1,6 +1,6 @@
 import googlemaps
 import os
-print(os.environ.get('GMAPS_TOKEN'))
+
 gmaps = googlemaps.Client(key=os.environ.get('GMAPS_TOKEN'))
 
 
