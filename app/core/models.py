@@ -217,7 +217,7 @@ class MobileResult(models.Model):
             ]
 
     def __str__(self):
-        return "%s<%s>" % (self.tester, self.test_device)
+        return "%s<success=%s>" % (self.timestamp, self.success)
 
 
 class IPaddress(models.Model):

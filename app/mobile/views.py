@@ -71,8 +71,8 @@ class ListNtcMobileTestsView(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     def list(self, request, *args, **kwargs):
-        queryset = NTCSpeedTest.objects.filter(
-            tester=self.request.user)
+        device_obj = get_object_or_404(models.MobileDevice, user=self.request.user)
+        queryset = NTCSpeedTest.objects.filter(test_device=device_obj)
         serializer = NtcMobileResultsSerializer(queryset, many=True)
         return Response(serializer.data)
 

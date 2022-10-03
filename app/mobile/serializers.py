@@ -1,10 +1,12 @@
+from rest_framework import serializers
+
 from core.models import (
     MobileResult,
     MobileDevice,
     NTCSpeedTest,
 )
 
-from rest_framework import serializers
+from user.serializers import UserSerializer
 
 
 class MobileDeviceSerializer(serializers.ModelSerializer):
@@ -25,9 +27,17 @@ class MobileResultsSerializer(serializers.ModelSerializer):
 
 
 class NtcMobileResultsSerializer(serializers.ModelSerializer):
+    """SerializeR for NTC Field Tester Test Results"""
 
     class Meta:
         model = NTCSpeedTest
-        fields = "__all__"
+        fields = ["id", "date_created", "test_id", "result",
+                  "location", "test_device"]
         read_only_fields = (
-            'date_created', 'result', 'test_device', 'id', 'test_id')
+            'date_created',
+            'result',
+            'test_device',
+            'id',
+            'test_id',
+            "location")
+        depth = 1
