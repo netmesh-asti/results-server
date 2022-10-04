@@ -19,7 +19,7 @@ def get_location(lat, lon):
             data["province"] = i['address_components'][0].get('long_name')
         if "administrative_area_level_3" in i['types']:
             data["municipality"] = i['address_components'][0].get('long_name')
-        if "neighborhood" in i['types']:
+        if "neighborhood" in i['types'] or "administrative_area_level_5" in i['types']:
             data["barangay"] = i['address_components'][0].get('long_name')
     return data
 
