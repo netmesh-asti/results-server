@@ -1,24 +1,27 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 
 from rest_framework import (
     generics,
-    permissions,)
+    permissions,
+    viewsets,
+    status,
+    response)
 from rest_framework.exceptions import ValidationError
+from rest_framework.decorators import action
 
 from durin.settings import durin_settings
 from durin.auth import TokenAuthentication
 from durin.views import LoginView
 from durin.models import Client, AuthToken
 from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiParameter,)
+    extend_schema)
+
 
 from user.serializers import (
     UserSerializer,
-    ListUsersSerializer,
-    ListUserRequestSerializer,
-    AuthTokenSerializer)
+    UserProfileSerializer,
+    AuthTokenSerializer,
+    ProfileImageSerializer)
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
 
@@ -27,45 +30,40 @@ class CustomTokenScheme(DurinTokenScheme):
     pass
 
 
-class CreateUserView(generics.CreateAPIView):
-    """Create a new user in the system"""
-    serializer_class = UserSerializer
+# class CreateUserView(generics.CreateAPIView):
+#     """Create a new user in the system"""
+#     serializer_class = UserSerializer
+#     permission_classes = (
+#         permissions.IsAdminUser,
+#     )
+#     authentication_classes = (TokenAuthentication,)
+#
+#     def perform_create(self, serializer):
+#         serializer.save()
+#         c = Client.objects.get(name=TEST_CLIENT_NAME)
+#         user = get_user_model().objects.get(email=self.request.data['email'])
+#         AuthToken.objects.create(client=c, user=user)
+
+
+class UserProfileView(generics.RetrieveAPIView):
+    """
+    Retrieve User Profile
+    Editing not Allowed
+    """
+    serializer_class = UserProfileSerializer
     permission_classes = (
-        permissions.IsAdminUser,
-    )
-    authentication_classes = (TokenAuthentication,)
-
-    def perform_create(self, serializer):
-        serializer.save()
-        c = Client.objects.get(name=TEST_CLIENT_NAME)
-        user = get_user_model().objects.get(email=self.request.data['email'])
-        AuthToken.objects.create(client=c, user=user)
-
-
-class ListUsersView(generics.ListAPIView):
-    """List all users"""
-    serializer_class = ListUsersSerializer
-    permission_classes = (
-        permissions.IsAdminUser,
+        permissions.IsAuthenticated,
     )
     authentication_classes = (TokenAuthentication,)
 
     @extend_schema(
         parameters=[
-            ListUserRequestSerializer,
-            OpenApiParameter("ntc_region", ListUserRequestSerializer),
         ],
-        request=ListUserRequestSerializer,
-        responses=ListUsersSerializer,
+        request=UserProfileSerializer,
+        responses=UserProfileSerializer,
     )
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def get_queryset(self):
-        """return users from a region"""
-        region = self.request.query_params['ntc_region']
-        return get_user_model().objects.filter(
-            ntc_region=region).filter(is_staff=False)
+    def get_object(self):
+        return get_user_model().objects.get(email=self.request.user)
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
@@ -79,18 +77,64 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-class ManageFieldUsersView(generics.RetrieveUpdateAPIView):
-    """list and allow update field tester information"""
-    serializer_class = UserSerializer
+class ManageFieldUsersView(viewsets.ModelViewSet):
+    """
+    Manage field users' account
+    Create, Update, Partial_Update and Delete
+    """
+    queryset = get_user_model().objects.all()
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (permissions.IsAuthenticated,
-                          permissions.IsAdminUser,)
+    permission_classes = (permissions.IsAdminUser,)
 
-    def get_object(self):
-        queryset = get_user_model().objects.all()
-        email = self.request.query_params.get('email')
-        obj = get_object_or_404(queryset, email=email)
-        return obj
+    def get_queryset(self):
+        if self.action == "list":
+            user = get_user_model().objects.get(email=self.request.user)
+            return get_user_model().objects.filter(
+                ntc_region=user.ntc_region, is_staff=False)
+        elif self.action == "create":
+            return get_user_model().objects.all()
+        return get_user_model().objects.filter(id=int(self.kwargs['pk']))
+
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'list' or self.action == 'retrieve':
+            return UserSerializer
+        elif self.action == "create":
+            return UserSerializer
+        elif self.action == 'upload_image':
+            return ProfileImageSerializer
+        return UserSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+        # Create a default web client for everyone
+        c = Client.objects.get(
+            name=TEST_CLIENT_NAME)
+        user = get_user_model().objects.get(email=self.request.data['email'])
+        AuthToken.objects.create(client=c, user=user)
+
+    @extend_schema(
+        parameters=[
+        ],
+        request=UserSerializer,
+        responses=UserSerializer,
+        # more customizations
+    )
+    @action(methods=['POST'], detail=False, url_path='upload-image')
+    def upload_image(self, request, pk=None):
+        """Upload an image to recipe."""
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_200_OK)
+
+        return response.Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthTokenView(LoginView):

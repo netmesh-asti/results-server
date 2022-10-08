@@ -6,8 +6,6 @@ from core.models import (
     NTCSpeedTest,
 )
 
-from user.serializers import UserSerializer
-
 
 class MobileDeviceSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""

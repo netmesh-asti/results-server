@@ -1,4 +1,6 @@
 import uuid
+import os
+
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, \
@@ -10,6 +12,14 @@ from django.conf import settings
 from durin.models import Client
 
 from core import choices
+
+
+def profile_image_file_path(instance, filename):
+    """Generate file path for new recipe image."""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('uploads', 'recipe', filename)
 
 
 class UserManager(BaseUserManager):
@@ -50,6 +60,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         default='Asia/Manila',
         choices=choices.timezone_choices
     )
+    profile_picture = models.ImageField(
+        null=True,
+        upload_to=profile_image_file_path)
     is_ntc = models.BooleanField(default=True)
     is_field_tester = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)

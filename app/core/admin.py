@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from core import models
 from core.group_admin import GroupAdminForm
 
+
 class UserAdmin(BaseUserAdmin):
     ordering = ['id']
     list_display = ['email', 'first_name', 'last_name', 'ntc_region']
@@ -41,7 +42,6 @@ class GroupAdmin(admin.ModelAdmin):
     form = GroupAdminForm
     # Filter permissions horizontal as well.
     filter_horizontal = ['permissions']
-
 
 # Register the new Group ModelAdmin.
 admin.site.register(Group, GroupAdmin)
