@@ -11,11 +11,12 @@ from durin.models import Client, AuthToken
 from app.settings import TEST_CLIENT_NAME
 from core.choices import ntc_region_choices
 
-CREATE_USER_URL = reverse("user:create")
-RETRIEVE_USER_URL = reverse("user:my-profile")
-RETRIEVE_FIELD_TESTER_URL = reverse("user:manage-account")
+USER_MANAGE_URL = reverse("user:user-list")  # create and list
 GET_TOKEN_URL = reverse("user:token")
-LIST_USERS_URL = reverse("user:users")
+
+LIST_USERS_URL = reverse("user:user-list")
+RETRIEVE_FIELD_TESTER_URL = reverse("user:user-list")
+USER_PROFILE_URL = reverse("user:my-profile")
 
 
 def create_user(is_admin=False, **params):
@@ -50,12 +51,12 @@ class AdminUserAPITests(TestCase):
 
     def test_not_authenticated_create_account_fail(self):
         """Test that create user returns unauthorized if not authenticated"""
-        res = self.client.post(CREATE_USER_URL, {})
+        res = self.client.post(USER_MANAGE_URL, {})
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_not_admin_create_account_forbidden(self):
         self.client.force_authenticate(user=self.user)
-        res = self.client.post(CREATE_USER_URL, {})
+        res = self.client.post(USER_MANAGE_URL, {})
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_create_valid_user_success(self):
@@ -65,41 +66,54 @@ class AdminUserAPITests(TestCase):
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester",
+            "ntc_region": "1"
         }
 
         # only admins are allowed to create/update field testers
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.post(CREATE_USER_URL, payload)
+        res = self.client.post(USER_MANAGE_URL, data=payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        user = get_user_model().objects.get(**res.data)
+        user = get_user_model().objects.get(email=res.data['email'])
         self.assertTrue(user.check_password(payload['password']))
         self.assertNotIn('password', res.data)
 
+    def test_list_users_success(self):
+        """test that only users from selected region is returned"""
+
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get(USER_MANAGE_URL,
+                              data={'ntc_region': self.regions[1]})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        items_str = json.dumps(res.data)
+        items = json.loads(items_str)
+        self.assertIn('id', items[0])
+
     def test_retrieve_update_user_success(self):
         """test that admin can fetch field tester and update"""
-        # only admin are allowed to update
+        # only staffs are allowed to update
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(RETRIEVE_FIELD_TESTER_URL, {'email':
-                                                          'test@example.com'})
+
+        res = self.client.get(reverse('user:user-detail', args=[self.user.id]),
+                              {})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data,
-                         {"email": "test@example.com",
-                          "first_name": "netmesh",
-                          "last_name": "tester",
-                          "ntc_region": "unknown"})
+        self.assertIn("email", res.data)
 
         # Update User Profile
-        res = self.client.patch(RETRIEVE_USER_URL,
-                                {"first_name": "asti"})
+        user_id = res.data['id']
+        res = self.client.patch(reverse(
+            "user:user-detail",
+            args=[user_id]),
+            {"first_name": "asti"}
+        )
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        user = get_user_model().objects.get(**res.data)
+        user = get_user_model().objects.get(id=user_id)
         self.assertEqual('asti', user.first_name)
 
     def test_retrieve_not_found_404(self):
         """test that retrieving not found user return 404"""
+        retrieve_user_url = reverse("user:user-detail", args=[1])  # retrieve
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(RETRIEVE_FIELD_TESTER_URL,
-                              {'email': 'none@gmail.com'})
+        res = self.client.get(retrieve_user_url, {})
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_token_no_credentials_fail(self):
@@ -127,28 +141,17 @@ class AdminUserAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("token", res.data)
 
-    def test_list_users_success(self):
-        """test that only users from selected region is returned"""
-
-        self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(LIST_USERS_URL,
-                              data={'ntc_region': self.regions[1]})
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        items_str = json.dumps(res.data)
-        items = json.loads(items_str)
-        self.assertIn('first_name', items[0])
-
     def test_get_users_from_region_success(self):
         """test that only users from selected region is returned"""
 
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(LIST_USERS_URL,
+        res = self.client.get(USER_MANAGE_URL,
                               data={'ntc_region': self.regions[1]})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         items_str = json.dumps(res.data)
         items = json.loads(items_str)
         ntc_regions = [region['ntc_region'] for region in items]
-        self.assertIn(self.regions[1], ntc_regions)
+        self.assertIn(self.admin_user.ntc_region, ntc_regions)
         self.assertNotIn(self.regions[2], ntc_regions)
 
     def test_get_users_no_admin_in_list(self):
@@ -161,7 +164,7 @@ class AdminUserAPITests(TestCase):
             self.new_user = get_user_model().objects.create_user(
                 **self.user_info)
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(LIST_USERS_URL,
+        res = self.client.get(USER_MANAGE_URL,
                               data={'ntc_region': self.regions[1]})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         items_str = json.dumps(res.data)
@@ -170,6 +173,13 @@ class AdminUserAPITests(TestCase):
         for email in ntc_users:
             user = get_user_model().objects.get(email=email)
             self.assertFalse(user.is_staff)
+
+    def test_delete_user_success(self):
+        self.client.force_authenticate(self.admin_user)
+        res = self.client.delete(reverse(
+            "user:user-detail",
+            args=[self.user.id]), {})
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
 
 class TestFieldUserAPITests(TestCase):
@@ -189,10 +199,12 @@ class TestFieldUserAPITests(TestCase):
     def test_retrieve_profile_success(self):
         """Test that field user can retrieve profile."""
 
-        # client = Client.objects.create(name="test_client")
+        client = Client.objects.create(name="test_client")
         # AuthToken.objects.create(client=client, user=self.user)
         # token = AuthToken.objects.get(user=self.user).token
+        obj = AuthToken.objects.create(user=self.user, client=client)
+        self.client.credentials(Authorization='Token ' + obj.token)
         self.client.force_authenticate(user=self.user)
-        res = self.client.get(RETRIEVE_USER_URL, {
+        res = self.client.get(USER_PROFILE_URL, {
         })
         self.assertEqual(res.status_code, status.HTTP_200_OK)

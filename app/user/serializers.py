@@ -5,7 +5,16 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'first_name', 'last_name', 'ntc_region')
+        fields = (
+            'id',
+            'email',
+            'password',
+            'first_name',
+            'last_name',
+            'ntc_region',
+            'profile_picture',
+            'is_staff')
+        read_only_fields = ('id', 'profile_picture', 'is_staff')
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
 
     def create(self, validated_data):
@@ -29,7 +38,7 @@ class ListUserRequestSerializer(serializers.ModelSerializer):
         fields = ("ntc_region",)
 
 
-class ListUsersSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for listing all users"""
 
     def update(self, instance, validated_data):
@@ -40,7 +49,13 @@ class ListUsersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("id", "ntc_region", "email", 'first_name', 'last_name')
+        fields = (
+            "id",
+            "ntc_region",
+            "email",
+            'first_name',
+            'last_name',
+            "is_staff")
 
 
 class AuthTokenSerializer(serializers.Serializer):
@@ -73,3 +88,13 @@ class AuthTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code='authentication')
         attrs['user'] = user
         return attrs
+
+
+class ProfileImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading profile pictures to Users."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'profile_picture']
+        read_only_fields = ['id']
+        extra_kwargs = {'profile_picture': {'required': 'True'}}
