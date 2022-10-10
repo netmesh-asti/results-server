@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 
 from rest_framework import (
     generics,
@@ -135,6 +136,22 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         return response.Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST', ], detail=True, url_path='assign-rfc-device')
+    def assign_rfc_device(self, request, pk=None):
+        """Assign RFC Device to User"""
+        user = get_object_or_404(get_user_model(), id=pk)
+        client = Client.objects.get(name=request.data['name'])
+        AuthToken.objects.create(user=user, client=client)
+        return response.Response(status=status.HTTP_200_OK)
+
+    @action(methods=['DELETE', ], detail=True, url_path='remove-rfc-device')
+    def remove_rfc_device(self, request, pk=None):
+        """Remove RFC Device From User"""
+        user = get_object_or_404(get_user_model(), id=pk)
+        client = Client.objects.get(name=request.data['name'])
+        AuthToken.objects.get(user=user, client=client).delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AuthTokenView(LoginView):

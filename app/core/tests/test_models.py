@@ -76,7 +76,7 @@ class NtcObjectsTest(TestCase):
             product='GF63',
             version='1.0',
             client=self.client,
-            user=self.user
+            owner=self.user
         )
 
         self.assertEqual(device.manufacturer, 'MSI')

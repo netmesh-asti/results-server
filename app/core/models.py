@@ -81,7 +81,7 @@ class RfcDevice(models.Model):
         by the RFC-6349 test agents
     """
     client = models.OneToOneField(Client, on_delete=models.CASCADE)
-    user = models.ForeignKey(
+    owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE)
     name = models.CharField(max_length=250, null=False)
@@ -101,7 +101,7 @@ class RfcDevice(models.Model):
         ordering = ['-id']
         constraints = [
             models.UniqueConstraint(fields=[
-                'user', 'serial_number', 'name'],
+                'owner', 'serial_number', 'name'],
                 name="unique rfc device")
             ]
 

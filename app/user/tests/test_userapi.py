@@ -181,6 +181,49 @@ class AdminUserAPITests(TestCase):
             args=[self.user.id]), {})
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
+    def test_assign_rfc_device_to_user_success(self):
+        device_client1 = Client.objects.create(name="device1")
+        self.client.force_authenticate(self.admin_user)
+        assign_rfc_url = reverse("user:user-assign-rfc-device",
+                                 args=[self.user.id])
+        res = self.client.post(assign_rfc_url, {
+            "name": device_client1.name
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_assign_multiple_rfc_device_to_user_success(self):
+        device_client1 = Client.objects.create(name="device1")
+        device_client2 = Client.objects.create(name="device2")
+        self.client.force_authenticate(self.admin_user)
+        assign_rfc_url = reverse("user:user-assign-rfc-device",
+                                 args=[self.user.id])
+        res = self.client.post(assign_rfc_url, {
+            "name": device_client1.name
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        res = self.client.post(assign_rfc_url, {
+            "name": device_client2.name
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    def test_remove_device_from_user(self):
+        device_client1 = Client.objects.create(name="device1")
+        self.client.force_authenticate(self.admin_user)
+        assign_rfc_url = reverse("user:user-assign-rfc-device",
+                                 args=[self.user.id])
+        res = self.client.post(assign_rfc_url, {
+            "name": device_client1.name
+        })
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Delete Device Token From user
+        delete_rfc_url = reverse("user:user-remove-rfc-device",
+                                 args=[self.user.id])
+        res = self.client.delete(delete_rfc_url, {
+            "name": device_client1.name
+        })
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
 
 class TestFieldUserAPITests(TestCase):
 

@@ -10,10 +10,10 @@ from durin.models import AuthToken, Client
 from core import models
 
 LIST_CREATE_RFCRESULT_URL = reverse("rfc6349:result")
-LIST_CREATE_RFCDEVICE_URL = reverse("rfc6349:device")
+LIST_CREATE_RFCDEVICE_URL = reverse("rfc6349:rfc-device-list")
 
 
-class TestRfcApi(TestCase):
+class PrivateTestRfcApi(TestCase):
     """Test RFC6349 Endpoints"""
 
     def setUp(self):
@@ -77,7 +77,7 @@ class TestRfcApi(TestCase):
             "ram": "8",
             "disk": "10000",
             "client": self.durin_client,
-            "user": self.user
+            "owner": self.user
             }
         self.client = APIClient()
 
@@ -125,10 +125,33 @@ class TestRfcApi(TestCase):
             "kernel": "5.15",
             "ram": "8",
             "disk": "10000",
-            "user": self.user.id
+            "owner": self.user.id
             }
         self.client.force_authenticate(user=self.admin)
         res = self.client.post(LIST_CREATE_RFCDEVICE_URL, device)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         client = Client.objects.get(name=device['name'])
         self.assertTrue(client)
+
+    def test_list_device_success(self):
+        """Test that Admin can list all registered devices"""
+
+        device = {
+            "serial_number": "123456",
+            "name": "TestUserDevice",
+            "manufacturer": "ACER",
+            "product": "Samsung S22",
+            "version": "1",
+            "os": "Ubuntu 22.04",
+            "kernel": "5.15",
+            "ram": "8",
+            "disk": "10000",
+            "owner": self.user,
+            }
+        client = Client.objects.create(name=device['name'])
+        device['client'] = client
+        device = models.RfcDevice.objects.create(**device)
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.get(LIST_CREATE_RFCDEVICE_URL, {})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data[0]['name'], device.name)
