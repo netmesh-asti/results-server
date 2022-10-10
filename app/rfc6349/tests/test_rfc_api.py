@@ -60,8 +60,8 @@ class PrivateTestRfcApi(TestCase):
             "tcp_eff": 100.0,
             "ave_rtt": 2.1,
             "buf_delay": 5.0,
-            "gps_lat": 14.0,
-            "gps_lon": 121.0,
+            "lat": 14.0,
+            "lon": 121.0,
             "location": "building",
             "server": self.server.id,
             }

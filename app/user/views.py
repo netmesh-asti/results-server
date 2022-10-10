@@ -31,21 +31,6 @@ class CustomTokenScheme(DurinTokenScheme):
     pass
 
 
-# class CreateUserView(generics.CreateAPIView):
-#     """Create a new user in the system"""
-#     serializer_class = UserSerializer
-#     permission_classes = (
-#         permissions.IsAdminUser,
-#     )
-#     authentication_classes = (TokenAuthentication,)
-#
-#     def perform_create(self, serializer):
-#         serializer.save()
-#         c = Client.objects.get(name=TEST_CLIENT_NAME)
-#         user = get_user_model().objects.get(email=self.request.data['email'])
-#         AuthToken.objects.create(client=c, user=user)
-
-
 class UserProfileView(generics.RetrieveAPIView):
     """
     Retrieve User Profile

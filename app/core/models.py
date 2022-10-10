@@ -111,9 +111,10 @@ class RfcDevice(models.Model):
 
 class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
+    name = models.CharField(max_length=100, blank=False)
     client = models.OneToOneField(Client, on_delete=models.CASCADE)
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE)
     serial_number = models.CharField(max_length=250, blank=True)
     imei = models.CharField(max_length=250, blank=True)
@@ -275,7 +276,6 @@ class RfcResult(models.Model):
         blank=True,
         unique=True
     )
-    device = models.ForeignKey(RfcDevice, on_delete=models.CASCADE)
     direction = models.CharField(
         null=False,
         max_length=10,
@@ -472,9 +472,30 @@ class NTCSpeedTest(models.Model):
         unique=True
     )
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
-    tester = models.ForeignKey(settings.AUTH_USER_MODEL,
+    tester = models.ForeignKey(User,
                                on_delete=models.CASCADE)
     test_device = models.ForeignKey(MobileDevice,
+                                    on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "%s<%s>" % (self.date_created, self.location.barangay)
+
+
+class RfcTest(models.Model):
+
+    result = models.ForeignKey(RfcResult, on_delete=models.CASCADE)
+    date_created = models.DateTimeField(auto_now_add=True)
+    test_id = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        editable=False,
+        blank=True,
+        unique=True
+    )
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    tester = models.ForeignKey(User,
+                               on_delete=models.CASCADE)
+    test_device = models.ForeignKey(RfcDevice,
                                     on_delete=models.CASCADE)
 
     def __str__(self):
