@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'mobile',
     'rfc6349',
     'server',
+    'location',
     'durin'
 ]
 
