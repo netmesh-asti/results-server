@@ -7,9 +7,12 @@ from rest_framework import (
     status,
     response
 )
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import APIException, NotFound
+
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
+
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from core.models import (
     RfcResult,
@@ -20,7 +23,8 @@ from core.models import (
 from rfc6349.serializers import (
     Rfc6349ResultSerializer,
     RfcDeviceSerializer,
-    RfcTestSerializer
+    RfcTestSerializer,
+    RfcDeviceNameSerializer,
 )
 
 from core import utils
@@ -58,13 +62,24 @@ class Rfc6349ResView(generics.ListCreateAPIView):
 
 
 class RfcDeviceView(viewsets.ModelViewSet):
-    serializer_class = RfcDeviceSerializer
     queryset = RfcDevice.objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAdminUser]
 
+    def get_serializer_class(self):
+        if self.request.query_params.get('check_name'):
+            return RfcDeviceNameSerializer
+        return RfcDeviceSerializer
+
     def get_queryset(self):
         if self.action == "list":
+            name = self.request.query_params.get('check_name')
+            if name:
+                device_query = RfcDevice.objects.filter(
+                    client__name=name
+                )
+                if device_query.exists():
+                    raise APIException("The client name is already taken. ")
             email = self.request.user
             admin = get_user_model().objects.get(email=email)
             device_query = RfcDevice.objects.filter(
@@ -73,10 +88,31 @@ class RfcDeviceView(viewsets.ModelViewSet):
 
         return self.queryset
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='check_name',
+                description='Client Name',
+                type=str),
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return response.Response(serializer.data)
+
     def perform_create(self, serializer):
         name = self.request.data['name']
         device_user = self.request.data['owner']
         user = get_user_model().objects.get(id=device_user)
+        if Client.objects.filter(name=name).exists():
+            raise APIException("Name already exists!")
         client = Client.objects.create(name=name)
         AuthToken.objects.create(client=client, user=user)
         serializer.save(client=client, owner=user)

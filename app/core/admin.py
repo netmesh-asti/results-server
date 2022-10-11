@@ -43,6 +43,7 @@ class GroupAdmin(admin.ModelAdmin):
     # Filter permissions horizontal as well.
     filter_horizontal = ['permissions']
 
+
 # Register the new Group ModelAdmin.
 admin.site.register(Group, GroupAdmin)
 

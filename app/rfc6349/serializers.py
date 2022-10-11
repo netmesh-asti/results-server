@@ -43,3 +43,12 @@ class RfcTestSerializer(serializers.ModelSerializer):
             'date_created',
             'test_id',
         )
+
+
+class RfcDeviceNameSerializer(serializers.ModelSerializer):
+    """Serializer for RFC Device Check Name"""
+    check_name = serializers.CharField(allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = RfcDevice
+        fields = ('check_name', )
