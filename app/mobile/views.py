@@ -8,6 +8,9 @@ from rest_framework.response import Response
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
 
+from drf_spectacular.utils import (
+    extend_schema)
+
 from core import utils, models
 
 
