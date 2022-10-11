@@ -106,13 +106,25 @@ class RfcDeviceView(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return response.Response(serializer.data)
+    @extend_schema(
+        parameters=[
+        ],
+        request=RfcDeviceSerializer,
+        responses=RfcDeviceSerializer
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return response.Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         name = self.request.data['name']
         device_user = self.request.data['owner']
         user = get_user_model().objects.get(id=device_user)
         if Client.objects.filter(name=name).exists():
-            raise APIException("Name already exists!")
+            raise APIException("The name already exists.")
         client = Client.objects.create(name=name)
         AuthToken.objects.create(client=client, user=user)
         serializer.save(client=client, owner=user)
