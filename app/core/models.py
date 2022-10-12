@@ -500,3 +500,33 @@ class RfcTest(models.Model):
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
+
+
+class NtcRegionalOffice(models.Model):
+    address = models.CharField(max_length=250, blank=True)
+    region = models.CharField(max_length=250,
+                              choices=choices.ntc_region_choices)
+    telephone = models.CharField(max_length=250, blank=True)
+    mobile = models.CharField(max_length=250, blank=True)
+
+    mission = models.CharField(max_length=250, blank=True)
+    vision = models.CharField(max_length=250, blank=True)
+    director = models.CharField(max_length=250, blank=True)
+
+
+class NtcOfficeEmails(models.Model):
+    office = models.ForeignKey(NtcRegionalOffice,
+                               on_delete=models.CASCADE)
+    email = models.EmailField(max_length=250, null=True)
+
+
+class NtcOfficeTele(models.Model):
+    office = models.ForeignKey(NtcRegionalOffice,
+                               on_delete=models.CASCADE)
+    tel_num = models.CharField(max_length=250, blank=True)
+
+
+class NtcOfficeMob(models.Model):
+    office = models.ForeignKey(NtcRegionalOffice,
+                               on_delete=models.CASCADE)
+    mob_num = models.CharField(max_length=250, blank=True)
