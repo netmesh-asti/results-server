@@ -36,14 +36,28 @@ urlpatterns = [
     #      views.RetrieveUserMobileResultDetail.as_view(),
     #      name='userntcmobiledetail'
     #      ),
-    # path('mobiledevicelist/',
-    #      views.ListUserMobileDevices.as_view(),
-    #      name='mobiledevicelist'
-    #      ),
-    # path('mobiledevicedetail/<serial_number>',
-    #      views.RetrieveUserMobileDeviceDetail.as_view(),
-    #      name='mobiledevicedetail'
-    #      ),
+    path('ft/device/',
+         views.ListUserMobileDevices.as_view(),
+         name='mobiledevicelist'
+         ),
+    path('ft/device/<serial_number>',
+         views.RetrieveUserMobileDeviceDetail.as_view(),
+         name='mobiledevicedetail'
+         ),
+
+    path('result/datatable',
+         views.MobileResultsList,
+         name='mobileresultslist'
+         ), 
+    path('result/csv',
+         views.MobileResultCSV.as_view(),
+         name='mobileresultcsv'
+         ),
+    path('result/speedtest/<str:name>',
+         views.speedtest_performance_detail,
+         name='speedtestperformancedetail'
+         ),    
+    # path('android/list', views.ListAndroidResView.as_view(), name='list')
 ]
 
 urlpatterns += router.urls

@@ -111,3 +111,38 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
         serializer = RfcTestSerializer(
             queryset, many=True)
         return response.Response(serializer.data)
+        serializer.save(client=client, user=user)
+
+
+
+
+# class RetrieveRfc6349ResDetail(generics.RetrieveAPIView):
+#     serializer_class = NtcMobileResultsSerializer
+#     authentication_classes = (TokenAuthentication,)
+#     permission_classes = [permissions.IsAuthenticated, ]
+
+#     def get_object(self):
+#         lookup_field = self.kwargs["test_id"]
+#         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
+
+
+# class ListUserMobileDevices(generics.ListAPIView):
+#     serializer_class = MobileDeviceSerializer
+#     permission_classes = (permissions.IsAuthenticated, )
+#     authentication_classes = (TokenAuthentication, )
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         print(user)
+#         return MobileDevice.objects.filter(user=user)
+
+
+# class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
+#     serializer_class = MobileDeviceSerializer
+#     authentication_classes = (TokenAuthentication,)
+#     permission_classes = [permissions.IsAuthenticated, ]
+
+#     def get_object(self):
+#         lookup_field = self.kwargs["serial_number"]
+#         return get_object_or_404(MobileDevice, serial_number=lookup_field)
+

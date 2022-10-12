@@ -15,6 +15,7 @@ class Rfc6349ResultSerializer(serializers.ModelSerializer):
         model = RfcResult
         exclude = ("id",)
         read_only_fields = ("created_on",)
+        depth = 2
 
 
 class RfcDeviceSerializer(serializers.ModelSerializer):
