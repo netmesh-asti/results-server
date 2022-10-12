@@ -506,37 +506,31 @@ class NtcRegionalOffice(models.Model):
     address = models.CharField(max_length=250, blank=True)
     region = models.CharField(max_length=250,
                               choices=choices.ntc_region_choices)
-    telephone = models.CharField(max_length=250, blank=True)
-    mobile = models.CharField(max_length=250, blank=True)
-
+    email = models.CharField(max_length=250, blank=True,
+                             help_text="Email Addresses "
+                                       "separated by "
+                                       "comma.")
+    telephone = models.CharField(max_length=250, blank=True,
+                                 help_text="Tel. No. "
+                                           "separated by "
+                                           "comma.")
+    mobile = models.CharField(max_length=250, blank=True,
+                              help_text="Mobile No. "
+                                        "separated by "
+                                        "comma.")
     mission = models.CharField(max_length=250, blank=True)
     vision = models.CharField(max_length=250, blank=True)
     director = models.CharField(max_length=250, blank=True)
 
     class Meta:
+        verbose_name = 'NTC Regional Office'
+        verbose_name_plural = 'Regional Offices'
+        ordering = ['region']
         constraints = [
             models.UniqueConstraint(
                 fields=['region'],
-                name="unique NRO")
+                name="unique NRO details")
             ]
 
     def __str__(self):
-        return "%s" % (self.region)
-
-
-class NtcOfficeEmails(models.Model):
-    office = models.ForeignKey(NtcRegionalOffice,
-                               on_delete=models.CASCADE)
-    email = models.EmailField(max_length=250, null=True)
-
-
-class NtcOfficeTele(models.Model):
-    office = models.ForeignKey(NtcRegionalOffice,
-                               on_delete=models.CASCADE)
-    tel_num = models.CharField(max_length=250, blank=True)
-
-
-class NtcOfficeMob(models.Model):
-    office = models.ForeignKey(NtcRegionalOffice,
-                               on_delete=models.CASCADE)
-    mob_num = models.CharField(max_length=250, blank=True)
+        return f"{self.region}"
