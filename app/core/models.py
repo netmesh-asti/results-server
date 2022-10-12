@@ -513,6 +513,16 @@ class NtcRegionalOffice(models.Model):
     vision = models.CharField(max_length=250, blank=True)
     director = models.CharField(max_length=250, blank=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['region'],
+                name="unique NRO")
+            ]
+
+    def __str__(self):
+        return "%s" % (self.region)
+
 
 class NtcOfficeEmails(models.Model):
     office = models.ForeignKey(NtcRegionalOffice,
