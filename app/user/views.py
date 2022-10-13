@@ -23,6 +23,8 @@ from user.serializers import (
     UserProfileSerializer,
     AuthTokenSerializer,
     ProfileImageSerializer)
+from rfc6349.serializers import RfcDeviceIdSerializer
+
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
 
@@ -74,9 +76,8 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action == "list":
-            user = get_user_model().objects.get(email=self.request.user)
             return get_user_model().objects.filter(
-                ntc_region=user.ntc_region, is_staff=False)
+                nro=self.request.user.nro)
         elif self.action == "create":
             return get_user_model().objects.all()
         return get_user_model().objects.filter(id=int(self.kwargs['pk']))
@@ -89,10 +90,12 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             return UserSerializer
         elif self.action == 'upload_image':
             return ProfileImageSerializer
+        elif self.action == "assign_rfc_device":
+            return RfcDeviceIdSerializer
         return UserSerializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(nro=self.request.user.nro)
         # Create a default web client for everyone
         c = Client.objects.get(
             name=TEST_CLIENT_NAME)

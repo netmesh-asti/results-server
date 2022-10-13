@@ -12,10 +12,16 @@ from core.models import NtcRegionalOffice
 
 class NroOfficeView(generics.ListCreateAPIView):
     """View for NRO"""
-    queryset = NtcRegionalOffice.objects.all()
+
     serializer_class = seriailzers.NroSerializer
     permission_classes = (permissions.IsAdminOrReadOnly, )
     authentication_classes = (TokenAuthentication, )
+
+    def get_queryset(self):
+        queryset = NtcRegionalOffice.objects.all().order_by(
+            'id'
+        )
+        return queryset
 
     def get_object(self):
         user = get_user_model().objects.get(

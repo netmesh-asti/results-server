@@ -11,11 +11,12 @@ class UserSerializer(serializers.ModelSerializer):
             'password',
             'first_name',
             'last_name',
-            'ntc_region',
+            'nro',
             'profile_picture',
             'is_staff')
-        read_only_fields = ('id', 'profile_picture', 'is_staff')
+        read_only_fields = ('id', 'profile_picture', 'nro', 'is_staff')
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
+        depth = 1
 
     def create(self, validated_data):
         """Create a new user with encrypted password"""
@@ -32,10 +33,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ListUserRequestSerializer(serializers.ModelSerializer):
-
+    """Only used in DRF spectacular"""
     class Meta:
         model = get_user_model()
-        fields = ("ntc_region",)
+        fields = ("nro",)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -51,7 +52,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = (
             "id",
-            "ntc_region",
+            "nro",
             "email",
             'first_name',
             'last_name',

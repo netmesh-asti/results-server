@@ -22,22 +22,66 @@ def profile_image_file_path(instance, filename):
     return os.path.join('uploads', 'user', filename)
 
 
+class NtcRegionalOffice(models.Model):
+    address = models.CharField(max_length=250, blank=True)
+    region = models.CharField(
+        max_length=20, choices=choices.ntc_region_choices,
+        default='unknown',
+        unique=True,
+        editable=False
+    )
+    description = models.CharField(max_length=250, blank=True, editable=False)
+    email = models.CharField(max_length=250, blank=True,
+                             help_text="Email Addresses "
+                                       "separated by "
+                                       "comma.")
+    telephone = models.CharField(max_length=250, blank=True,
+                                 help_text="Tel. No. "
+                                           "separated by "
+                                           "comma.")
+    mobile = models.CharField(max_length=250, blank=True,
+                              help_text="Mobile No. "
+                                        "separated by "
+                                        "comma.")
+    mission = models.CharField(max_length=250, blank=True)
+    vision = models.CharField(max_length=250, blank=True)
+    director = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        verbose_name = 'NTC Regional Office'
+        verbose_name_plural = 'Regional Offices'
+        ordering = ['region']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['region'],
+                name="unique NRO details")
+            ]
+
+    def __str__(self):
+        return f"{self.region}"
+
+
 class UserManager(BaseUserManager):
 
-    def create_user(self, email, password=None, **kwargs):
+    def create_user(self, email, nro, password=None, **kwargs):
         if not email:
             raise ValueError()
-        user = self.model(email=self.normalize_email(email), **kwargs)
+        user = self.model(email=self.normalize_email(email), nro=nro, **kwargs)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, email, nro, password, **extra_fields):
         """
         Create and save a SuperUser with the given email and password.
         """
-        user = self.create_user(email, password, **extra_fields)
+        superuser_office = NtcRegionalOffice.objects.get(id=nro)
+        user = self.create_user(
+            email,
+            superuser_office,
+            password,
+            **extra_fields)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -50,11 +94,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
-    date_created = models.DateField(auto_now_add=True)
-    ntc_region = models.CharField(
-        max_length=20, choices=choices.ntc_region_choices,
-        default='unknown'
-    )
+    registration = models.DateField(auto_now_add=True)
+    nro = models.ForeignKey(NtcRegionalOffice, on_delete=models.CASCADE)
     timezone = models.CharField(
         max_length=50,
         default='Asia/Manila',
@@ -70,7 +111,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'nro']
 
     USERNAME_FIELD = 'email'
 
@@ -500,37 +541,3 @@ class RfcTest(models.Model):
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
-
-
-class NtcRegionalOffice(models.Model):
-    address = models.CharField(max_length=250, blank=True)
-    region = models.CharField(max_length=250,
-                              choices=choices.ntc_region_choices)
-    email = models.CharField(max_length=250, blank=True,
-                             help_text="Email Addresses "
-                                       "separated by "
-                                       "comma.")
-    telephone = models.CharField(max_length=250, blank=True,
-                                 help_text="Tel. No. "
-                                           "separated by "
-                                           "comma.")
-    mobile = models.CharField(max_length=250, blank=True,
-                              help_text="Mobile No. "
-                                        "separated by "
-                                        "comma.")
-    mission = models.CharField(max_length=250, blank=True)
-    vision = models.CharField(max_length=250, blank=True)
-    director = models.CharField(max_length=250, blank=True)
-
-    class Meta:
-        verbose_name = 'NTC Regional Office'
-        verbose_name_plural = 'Regional Offices'
-        ordering = ['region']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['region'],
-                name="unique NRO details")
-            ]
-
-    def __str__(self):
-        return f"{self.region}"

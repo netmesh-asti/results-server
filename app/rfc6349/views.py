@@ -32,9 +32,12 @@ from core import utils
 
 class Rfc6349ResView(generics.ListCreateAPIView):
     serializer_class = Rfc6349ResultSerializer
-    queryset = RfcResult.objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = RfcResult.objects.all().order_by('-timestamp')
+        return queryset
 
     def perform_create(self, serializer):
         token = self.request.auth
@@ -83,7 +86,7 @@ class RfcDeviceView(viewsets.ModelViewSet):
             email = self.request.user
             admin = get_user_model().objects.get(email=email)
             device_query = RfcDevice.objects.filter(
-                owner__ntc_region=admin.ntc_region)
+                owner__nro=admin.nro)
             return device_query
 
         return self.queryset
@@ -133,6 +136,7 @@ class RfcDeviceView(viewsets.ModelViewSet):
         serializer.save(client=client, owner=user)
 
 
+@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
     """
     View for Staff User
@@ -158,7 +162,7 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """List all results from staff's regions"""
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by("-timestamp")
         serializer = RfcTestSerializer(
             queryset, many=True)
         return response.Response(serializer.data)

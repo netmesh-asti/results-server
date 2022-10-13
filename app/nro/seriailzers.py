@@ -9,4 +9,4 @@ class NroSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NtcRegionalOffice
-        exclude = ('id',)
+        fields = "__all__"

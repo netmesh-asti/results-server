@@ -8,8 +8,12 @@ from rest_framework.response import Response
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
 
-from core import utils, models
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter
+)
 
+from core import utils, models
 
 from mobile.serializers import (
     MobileResultsSerializer,
@@ -62,6 +66,7 @@ class MobileResultsView(generics.CreateAPIView):
                 location=loc)
 
 
+@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     """
     View for Staff User
@@ -111,13 +116,15 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
         instance = NTCSpeedTest.objects.filter(
-                test_id=self.kwargs['test_id'])
+                test_id=self.kwargs['test_id']).order_by(
+            "-date_created"
+        )
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         """List all results from staff's regions"""
-        queryset = self.get_queryset()
+        queryset = NTCSpeedTest.objects.all().order_by("-date_created")
         serializer = NtcMobileResultsSerializer(
             queryset, many=True)
         return Response(serializer.data)
@@ -133,6 +140,7 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 #         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
 
+@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class ManageMobileDeviceView(viewsets.ModelViewSet):
     """Manage Enrollment of Mobile Devices for Staffs"""
     serializer_class = MobileDeviceSerializer
@@ -147,7 +155,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
                 email=self.request.user
             )
             return MobileDevice.objects.filter(
-                user__ntc_region=staff.ntc_region
+                user__nro=staff.nro
             )
 
     def retrieve(self, request, *args, **kwargs):

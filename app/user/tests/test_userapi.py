@@ -9,6 +9,7 @@ from rest_framework import status
 from durin.models import Client, AuthToken
 
 from app.settings import TEST_CLIENT_NAME
+from core import models
 from core.choices import ntc_region_choices
 
 USER_MANAGE_URL = reverse("user:user-list")  # create and list
@@ -30,22 +31,30 @@ class AdminUserAPITests(TestCase):
     """Test Create User API (NTC)"""
 
     def setUp(self):
-        self.user_info = {
-                    "email": "test@example.com",
-                    "password": "test123",
-                    "first_name": "netmesh",
-                    "last_name": "tester",
-                    "ntc_region": "unknown"
+        regions = [region[0] for region in ntc_region_choices]
+        emails = ('user1', 'user2', 'user3', 'user4', 'user5')
+        self.ft = list()
+        self.nros = list()
+        for region, name in zip(regions, emails):
+            nro = models.NtcRegionalOffice.objects.create(**{"region": region})
+            new_user = get_user_model().objects.create_user(
+                **{
+                    'email': f'{name}@example.com',
+                    'nro': nro
                 }
+            )
+            self.ft.append(new_user)
+            self.nros.append(nro)
+        self.user_info = {
+            "email": "test@example.com",
+            "password": "test123",
+            "first_name": "netmesh",
+            "last_name": "tester",
+            "nro": self.nros[0]
+        }
         self.user = create_user(**self.user_info)
         self.admin_user = create_user(is_admin=True, **self.user_info)
-        self.regions = [region[0] for region in ntc_region_choices]
-        emails = ('user1', 'user2', 'user3', 'user4', 'user5')
-        for region, name in zip(self.regions, emails):
-            self.user_info['email'] = f'{name}@example.com'
-            self.user_info['ntc_region'] = region
-            self.new_user = get_user_model().objects.create_user(
-                **self.user_info)
+
         self.client = APIClient()
         Client.objects.create(name=TEST_CLIENT_NAME)
 
@@ -66,7 +75,7 @@ class AdminUserAPITests(TestCase):
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester",
-            "ntc_region": "1"
+            "nro": self.nros[1].id
         }
 
         # only admins are allowed to create/update field testers
@@ -82,7 +91,7 @@ class AdminUserAPITests(TestCase):
 
         self.client.force_authenticate(user=self.admin_user)
         res = self.client.get(USER_MANAGE_URL,
-                              data={'ntc_region': self.regions[1]})
+                              data={'nro': self.nros[1]})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         items_str = json.dumps(res.data)
         items = json.loads(items_str)
@@ -93,7 +102,8 @@ class AdminUserAPITests(TestCase):
         # only staffs are allowed to update
         self.client.force_authenticate(user=self.admin_user)
 
-        res = self.client.get(reverse('user:user-detail', args=[self.user.id]),
+        res = self.client.get(reverse('user:user-detail',
+                                      args=[self.user.id]),
                               {})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("email", res.data)
@@ -145,34 +155,36 @@ class AdminUserAPITests(TestCase):
         """test that only users from selected region is returned"""
 
         self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(USER_MANAGE_URL,
-                              data={'ntc_region': self.regions[1]})
+        res = self.client.get(USER_MANAGE_URL, {})
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         items_str = json.dumps(res.data)
         items = json.loads(items_str)
-        ntc_regions = [region['ntc_region'] for region in items]
-        self.assertIn(self.admin_user.ntc_region, ntc_regions)
-        self.assertNotIn(self.regions[2], ntc_regions)
+        nros = [nro['nro'] for nro in items]
+        self.assertIn(
+            self.admin_user.nro.region,
+            nros[0].values())
+        self.assertNotIn(self.nros[2], nros)
 
-    def test_get_users_no_admin_in_list(self):
-        """test that no admin in the list"""
-        emails = ('admin1', 'admin2', 'admin3', 'admin4', 'admin5')
-        for region, name in zip(self.regions, emails):
-            self.user_info['email'] = f'{name}@example.com'
-            self.user_info['is_staff'] = True
-            self.user_info['ntc_region'] = region
-            self.new_user = get_user_model().objects.create_user(
-                **self.user_info)
-        self.client.force_authenticate(user=self.admin_user)
-        res = self.client.get(USER_MANAGE_URL,
-                              data={'ntc_region': self.regions[1]})
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        items_str = json.dumps(res.data)
-        items = json.loads(items_str)
-        ntc_users = [region['email'] for region in items]
-        for email in ntc_users:
-            user = get_user_model().objects.get(email=email)
-            self.assertFalse(user.is_staff)
+    # def test_get_users_no_admin_in_list(self):
+    #     """test that no admin in the list"""
+    #     # Disabled, allow admin in list 14/10/2022
+    #     emails = ('admin1', 'admin2', 'admin3', 'admin4', 'admin5')
+    #     for nro, name in zip(self.nros, emails):
+    #         self.user_info['email'] = f'{name}@example.com'
+    #         self.user_info['is_staff'] = True
+    #         self.user_info['nro'] = nro
+    #         self.new_user = get_user_model().objects.create_user(
+    #             **self.user_info)
+    #     self.client.force_authenticate(user=self.admin_user)
+    #     res = self.client.get(USER_MANAGE_URL,
+    #                           data={'nro': self.nros[1].id})
+    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    #     items_str = json.dumps(res.data)
+    #     items = json.loads(items_str)
+    #     ntc_users = [region['email'] for region in items]
+    #     for email in ntc_users:
+    #         user = get_user_model().objects.get(email=email)
+    #         self.assertFalse(user.is_staff)
 
     def test_delete_user_success(self):
         self.client.force_authenticate(self.admin_user)
@@ -228,12 +240,17 @@ class AdminUserAPITests(TestCase):
 class TestFieldUserAPITests(TestCase):
 
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user_info = {
             "email": "test@example.com",
             "password": "test123",
             "first_name": "netmesh",
             "last_name": "tester",
-            "ntc_region": "unknown"
+            "nro": self.nro
         }
         self.user = create_user(**self.user_info)
         self.client = APIClient()

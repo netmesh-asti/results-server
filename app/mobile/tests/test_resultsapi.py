@@ -15,6 +15,7 @@ from core.models import (
     MobileDevice,
     Server,
     NTCSpeedTest,
+    NtcRegionalOffice
 )
 
 SPEEDTEST_LIST_CREATE_RESULT_URL = reverse("mobile:result")
@@ -25,7 +26,6 @@ DEVICE_LIST_URL = reverse("mobile:mobile-device-list")
 
 
 def create_user(is_admin=False, **params):
-    params['ntc_region'] = "1"
     if is_admin:
         params['email'] = 'super@gmail.com'
         params['is_staff'] = True
@@ -34,11 +34,17 @@ def create_user(is_admin=False, **params):
 
 class PrivateAndroidApiTests(TestCase):
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = NtcRegionalOffice.objects.create(**self.nro_info)
         self.info = {
             "email": "netmesh@example.com",
             "password": "test123",
             "first_name": "netmesh",
-            "last_name": "tester"
+            "last_name": "tester",
+            "nro": self.nro
         }
         self.user = create_user(**self.info)
         self.admin = create_user(**self.info, is_admin=True)

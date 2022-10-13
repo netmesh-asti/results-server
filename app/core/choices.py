@@ -27,12 +27,14 @@ ntc_region_choices = [
     ('Central', 'NTC Region Central'),
     ('unknown', 'Unknown')
 ]
+
 device_choices = [
         ('unknown', 'Unknown'),
         ('computer', 'Computer'),
         ('smartphone', 'Smart Phone'),
         ('tablet', 'Tablet')
     ]
+
 network_choices = [
     ('unkown', 'unknown'),
     ('2g', '2G'),
@@ -41,11 +43,13 @@ network_choices = [
     ('lte', 'LTE'),
     ('dsl', 'DSL'),
 ]
+
 server_choices = [
     ('local', 'Local'),
     ('overseas', 'Overseas'),
     ('ix', 'Internet Exchange'),
     ('web-based', 'Web-based'),
+    ('rfc', 'RFC 6349'),
     ('unknown', 'Unknown')
 ]
 
@@ -67,6 +71,7 @@ direction_choices = [
 test_mode_choices = [
     ('upload', 'Upload Mode'),      # formerly normal mode
     ('download', 'Download Mode'),  # formerly reverse mode
+    ('bidirectional', 'bidirectional'),  # formerly reverse mode
     ('simultaneous', 'Simultaneous Mode'),
     ('unknown', 'Unknown')
 ]

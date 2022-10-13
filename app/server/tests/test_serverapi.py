@@ -5,20 +5,27 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from core import models
+
 LIST_CREATE_SERVER_URL = reverse("server:servers")
 
 
 class ServerAPITest(TestCase):
-
     """Tests for the servers endpoint"""
 
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user_admin = get_user_model().objects.create_superuser(
             **{
                 "email": "admin@example.com",
                 "first_name": "testadmin",
                 "last_name": "testadmin",
                 "password": "testpassword123",
+                "nro": self.nro.id
             }
         )
         self.data = {
@@ -32,7 +39,8 @@ class ServerAPITest(TestCase):
                 "email": "user@example.com",
                 "first_name": "testuser",
                 "last_name": "testuser",
-                "password": "testpassword123"
+                "password": "testpassword123",
+                "nro": self.nro
             }
         )
         self.client = APIClient()
