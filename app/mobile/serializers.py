@@ -57,6 +57,7 @@ class NtcMobileResultsSerializer(serializers.ModelSerializer):
             'test_id',
         )
 
+
 class MobileResultsListSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""
     test_device = MobileDeviceSerializer(read_only=True)
