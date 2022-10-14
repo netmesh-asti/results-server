@@ -22,7 +22,7 @@ ALLOWED_HOSTS.extend(
            os.environ.get('ALLOWED_HOSTS', '127.0.0.1').split(","),
            )
 )
-
+CSRF_TRUSTED_ORIGINS = ['https://{}'.format(os.environ.get('DOMAIN'))]
 
 # Application definition
 
