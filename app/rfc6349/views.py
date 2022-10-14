@@ -27,7 +27,17 @@ from rfc6349.serializers import (
     RfcDeviceNameSerializer,
 )
 
+from drf_spectacular.utils import extend_schema_view, extend_schema
+from django.utils.dateparse import parse_date
+from datetime import date
+import datetime
 from core import utils
+from django.db.models import Q
+from rest_framework_csv import renderers as r
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
 
 
 class Rfc6349ResView(generics.ListCreateAPIView):
@@ -144,6 +154,7 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
     Staffs can retrieve results from individual testers
     Staffs can't change or delete results
     """
+    lookup_field = "test_id"
     serializer_class = RfcTestSerializer
     permission_classes = (permissions.IsAdminUser, )
     authentication_classes = (TokenAuthentication, )
@@ -155,10 +166,11 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
-        instance = RfcTest.objects.filter(
-                tester_id=self.kwargs['pk'])
-        serializer = self.get_serializer(instance)
-        return response.Response(serializer.data)
+        lookup_field = self.kwargs["test_id"]
+        print(lookup_field)
+        user = get_object_or_404(RfcTest, test_id=lookup_field)
+        serializer = RfcTestSerializer(user)
+        return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         """List all results from staff's regions"""
@@ -166,3 +178,178 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
         serializer = RfcTestSerializer(
             queryset, many=True)
         return response.Response(serializer.data)
+
+
+class UserRFC6349TestsView(viewsets.ReadOnlyModelViewSet):
+    """
+    View for Field Tester aka User
+    FT can only retrieve his/her tests
+    FT can't change/delete his/her tests
+    """
+    lookup_field = "test_id"
+    serializer_class = RfcTestSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (TokenAuthentication, )
+
+    def get_queryset(self):
+        return RfcTest.objects.filter(
+            tester__email=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        lookup_field = self.kwargs["test_id"]
+        print(lookup_field)
+        user = get_object_or_404(RfcTest, test_id=lookup_field)
+        serializer = RfcTestSerializer(user)
+        return Response(serializer.data)
+
+
+class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
+    """
+    View for Field Tester aka User
+    FT can only retrieve his/her tests
+    FT can't change/delete his/her tests
+    """
+    lookup_field = "serial_number"
+    serializer_class = RfcDeviceSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    authentication_classes = (TokenAuthentication, )
+
+    def get_queryset(self):
+        return RfcDevice.objects.filter(
+            owner=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        lookup_field = self.kwargs["serial_number"]
+        print(lookup_field)
+        device = get_object_or_404(RfcDevice, serial_number=lookup_field)
+        serializer = RfcDeviceSerializer(device)
+        return Response(serializer.data)
+
+
+@extend_schema_view(
+    get=extend_schema(description='Fetch All RFC6349 Results for Staff Region Datatable ONLY (Ignore)'),
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def RFC6349ResultsList(request):
+    if request.method == 'GET':
+        rfcresults = RfcTest.objects.filter(tester__ntc_region=request.user.ntc_region)
+        total = RfcTest.objects.all().count()
+        draw = request.query_params.get('draw')
+        start = int(request.query_params.get('start'))
+        length = int(request.query_params.get('length'))
+        isp = request.query_params.get('isp')
+        search_query = request.GET.get('search[value]')
+        province = request.query_params.get('province')
+        municipality = request.query_params.get('municipality')
+        barangay = request.query_params.get('barangay')
+        order_column = request.GET.get('order[0][column]')
+        order = request.GET.get('order[0][dir]')
+        minDate = parse_date(request.query_params.get('minDate'))
+        maxDate = parse_date(request.query_params.get('maxDate'))
+
+        if order_column == '0':
+            order_column = "date_created"
+        if order == 'asc':
+            order_column = '-' + order_column
+        print(draw)
+        if search_query:
+            rfcresults = rfcresults.filter(Q(test_id__icontains=search_query))
+
+        if minDate:
+            rfcresults = rfcresults.filter(date_created__range=(minDate, date.today() + datetime.timedelta(days=1)))
+
+        if minDate and maxDate:
+            rfcresults = rfcresults.filter(date_created__range=(minDate, maxDate + datetime.timedelta(days=1)))
+
+        if isp:
+            rfcresults = rfcresults.filter(Q(result__operator__icontains=isp))
+
+        if province:
+            rfcresults = rfcresults.filter(Q(location__province__icontains=province))
+
+        if municipality:
+            rfcresults = rfcresults.filter(Q(location__municipality__icontains=municipality))
+
+        if barangay:
+            rfcresults = rfcresults.filter(Q(location__barangay__icontains=barangay))
+        total = rfcresults.count()
+        rfcresults = rfcresults.order_by(order_column)[start:start+length]
+        serializer = RfcTestSerializer(rfcresults, many=True)
+        response = {
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': serializer.data,
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class MyUserRenderer (r.CSVRenderer):
+    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name', 'ntc_region', 'province', 'municipality',
+              'barangay', 'mtu', 'rtt', 'bb', 'bdp', 'rwnd', 'actual_thpt', 'max_achievable_thpt', 'tx_bytes', 'ave_rtt',
+              'rwnd', 'retransmit_bytes', 'ideal_transfer_time', 'transfer_time_ratio', 'tcp_efficiency', 'buffer_delay']
+
+
+class RFC6349ResultCSV(APIView):
+    serializer_class = RfcTestSerializer
+    renderer_classes = (MyUserRenderer,)
+    header = ['date_created', 'test_id', 'tester_email']
+
+    def get(self, request):
+        isp = request.query_params.get('isp')
+        search_query = request.GET.get('search[value]')
+        province = request.query_params.get('province')
+        municipality = request.query_params.get('municipality')
+        minDate = parse_date(request.query_params.get('mindate'))
+        maxDate = parse_date(request.query_params.get('maxdate'))
+        barangay = request.query_params.get('barangay')
+        region = request.query_params.get('region')
+
+        response = RfcTest.objects.filter(tester__ntc_region=region).filter().order_by('-date_created')
+        if isp:
+            response = response.filter(Q(result__operator__icontains=isp))
+        if minDate:
+            response = response.filter(date_created__range=(minDate, date.today() + datetime.timedelta(days=1)))
+        if minDate and maxDate:
+            response = response.filter(date_created__range=(minDate, maxDate + datetime.timedelta(days=1)))
+
+        if isp:
+            response = response.filter(Q(result__operator__icontains=isp))
+        if province:
+            response = response.filter(Q(location__province__icontains=province))
+        if municipality:
+            response = response.filter(Q(location__municipality__icontains=municipality))
+        if barangay:
+            response = response.filter(Q(location__barangay__icontains=barangay))
+        if search_query:
+            response = response.filter(Q(test_id__icontains=search_query))
+
+        content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
+                    'test_id': response.test_id,
+                    'tester_email': response.tester.email,
+                    'tester_first_name': response.tester.first_name,
+                    'tester_last_name': response.tester.last_name,
+                    'ntc_region': response.tester.ntc_region,
+                    'province': response.location.province,
+                    'municipality': response.location.municipality,
+                    'barangay': response.location.barangay,
+                    'direction': response.result.direction,
+                    'mtu': response.result.mtu,
+                    'rtt': response.result.rtt,
+                    'bb': response.result.bb,
+                    'bdp': response.result.bdp,
+                    'rwnd': response.result.rwnd,
+                    'actual_thpt': response.result.actual_thpt,
+                    'max_achievable_thpt': response.result.max_achievable_thpt,
+                    'tx_bytes': response.result.tx_bytes,
+                    'ave_rtt': response.result.ave_rtt,
+                    'retransmit_bytes': response.result.retransmit_bytes,
+                    'acutal_transfer_time': response.result.acutal_transfer_time,
+                    'ideal_transfer_time': response.result.ideal_transfer_time,
+                    'transfer_time_ratio': response.result.transfer_time_ratio,
+                    'tcp_efficiency': response.result.tcp_efficiency,
+                    'buffer_delay': response.result.buffer_delay,
+                    }
+                   for response in response]
+        return Response(content)

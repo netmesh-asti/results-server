@@ -1,24 +1,30 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, viewsets
+from rest_framework import generics, permissions, viewsets, status
 from rest_framework.exceptions import NotFound
 from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.response import Response
-
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
 
-from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiParameter
-)
+from drf_spectacular.utils import extend_schema_view, extend_schema
+from django.utils.dateparse import parse_date
+from datetime import date, timedelta
+import datetime
+import calendar
 
 from core import utils, models
+from django.db.models import Q, Avg
+from rest_framework_csv import renderers as r
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from mobile.serializers import (
     MobileResultsSerializer,
     NtcMobileResultsSerializer,
-    MobileDeviceSerializer
+    MobileDeviceSerializer,
+    MobileResultsListSerializer
 )
 
 from core.models import (
@@ -115,8 +121,9 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
+        lookup_field = self.kwargs["test_id"]
         instance = NTCSpeedTest.objects.filter(
-                test_id=self.kwargs['test_id']).order_by(
+                test_id=lookup_field).order_by(
             "-date_created"
         )
         serializer = self.get_serializer(instance)
@@ -192,3 +199,139 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
     def get_object(self):
         lookup_field = self.kwargs["serial_number"]
         return get_object_or_404(MobileDevice, serial_number=lookup_field)
+
+
+@extend_schema_view(
+    get=extend_schema(description='Mobile Datatable (Ignore)',
+                      responses=MobileResultsListSerializer),
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def MobileResultsList(request):
+    if request.method == 'GET':
+        mobileresults = NTCSpeedTest.objects.filter(tester__ntc_region=request.user.ntc_region)
+        total = NTCSpeedTest.objects.all().count()
+        draw = request.query_params.get('draw')
+        start = int(request.query_params.get('start'))
+        length = int(request.query_params.get('length'))
+        isp = request.query_params.get('isp')
+        search_query = request.GET.get('search[value]')
+        province = request.query_params.get('province')
+        municipality = request.query_params.get('municipality')
+        barangay = request.query_params.get('barangay')
+        order_column = request.GET.get('order[0][column]')
+        order = request.GET.get('order[0][dir]')
+        minDate = parse_date(request.query_params.get('minDate'))
+        maxDate = parse_date(request.query_params.get('maxDate'))
+
+        if order_column == '0':
+            order_column = "date_created"
+        if order == 'asc':
+            order_column = '-' + order_column
+        print(draw)
+
+        if search_query:
+            mobileresults = mobileresults.filter(Q(test_id__icontains=search_query))
+
+        if minDate:
+            mobileresults = mobileresults.filter(date_created__range=(minDate,
+                                                 date.today() + datetime.timedelta(days=1)))
+        if minDate and maxDate:
+            mobileresults = mobileresults.filter(date_created__range=(minDate,
+                                                 maxDate + datetime.timedelta(days=1)))
+        if isp:
+            mobileresults = mobileresults.filter(Q(result__operator__icontains=isp))
+
+        if province:
+            mobileresults = mobileresults.filter(Q(location__province__icontains=province))
+
+        if municipality:
+            mobileresults = mobileresults.filter(Q(location__municipality__icontains=municipality))
+
+        if barangay:
+            mobileresults = mobileresults.filter(Q(location__barangay__icontains=barangay))
+        total = mobileresults.count()
+        mobileresults = mobileresults.order_by(order_column)[start:start+length]
+        serializer = MobileResultsListSerializer(mobileresults, many=True)
+        response = {
+            'draw': draw,
+            'recordsTotal': total,
+            'recordsFiltered': total,
+            'data': serializer.data,
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class MyUserRenderer (r.CSVRenderer):
+    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name',
+              'ntc_region', 'td_android_version',
+              'td_imei', 'td_phone_model', 'download', 'upload', 'ping',
+              'jitter', 'mcc', 'mnc', 'tac', 'network_type', 'operator',
+              'rssi', 'signal_quality',  'ssid', 'bssid', 'province',
+              'municipality', 'barangay']
+
+
+class MobileResultCSV(APIView):
+    serializer_class = NtcMobileResultsSerializer
+    renderer_classes = (MyUserRenderer,)
+    header = ['date_created', 'test_id', 'tester_email']
+
+    def get(self, request):
+        isp = request.query_params.get('isp')
+        # search_query = request.GET.get('search[value]')
+        province = request.query_params.get('province')
+        municipality = request.query_params.get('municipality')
+        minDate = parse_date(request.query_params.get('mindate'))
+        maxDate = parse_date(request.query_params.get('maxdate'))
+        barangay = request.query_params.get('barangay')
+        region = request.query_params.get('region')
+        response = NTCSpeedTest.objects.filter(tester__ntc_region=region).order_by('-date_created')
+
+        if isp:
+            response = response.filter(Q(result__operator__icontains=isp))
+
+        if minDate:
+            response = response.filter(date_created__range=(minDate,
+                                       date.today() + datetime.timedelta(days=1)))
+        if minDate and maxDate:
+            response = response.filter(date_created__range=(minDate,
+                                       maxDate + datetime.timedelta(days=1)))
+        if isp:
+            response = response.filter(Q(result__operator__icontains=isp))
+        if province:
+            response = response.filter(Q(location__province__icontains=province))
+
+        if municipality:
+            response = response.filter(Q(location__municipality__icontains=municipality))
+
+        if barangay:
+            response = response.filter(Q(location__barangay__icontains=barangay))
+
+        content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
+                    'test_id': response.test_id,
+                    'tester_email': response.tester.email,
+                    'tester_first_name': response.tester.first_name,
+                    'tester_last_name': response.tester.last_name,
+                    'ntc_region': response.tester.ntc_region,
+                    'td_android_version': response.test_device.android_version,
+                    'td_imei': response.test_device.imei,
+                    'td_phone_model': response.test_device.phone_model,
+                    'download': response.result.download,
+                    'upload': response.result.upload,
+                    'ping': response.result.ping,
+                    'jitter': response.result.jitter,
+                    'mcc': response.result.mcc,
+                    'mnc': response.result.mnc,
+                    'tac': response.result.tac,
+                    'network_type': response.result.network_type,
+                    'operator': response.result.operator,
+                    'rssi': response.result.rssi,
+                    'signal_quality': response.result.signal_quality,
+                    'ssid': response.result.ssid,
+                    'bssid': response.result.bssid,
+                    'province': response.location.province,
+                    'municipality': response.location.municipality,
+                    'barangay': response.location.barangay,
+                    }
+                   for response in response]
+        return Response(content)

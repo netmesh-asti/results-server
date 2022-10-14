@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'rfc6349',
     'server',
     'location',
-    'nro',
     'durin'
 ]
 
