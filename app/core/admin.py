@@ -9,9 +9,9 @@ from core.group_admin import GroupAdminForm
 
 class UserAdmin(BaseUserAdmin):
     ordering = ['id']
-    list_display = ['email', 'first_name', 'last_name', 'ntc_region']
+    list_display = ['email', 'first_name', 'last_name', 'registration']
     fieldsets = (
-        (None, {'fields': ('email', 'ntc_region', 'password')}),
+        (None, {'fields': ('email', 'nro', 'password')}),
         (_('Personal Info'), {'fields': ('first_name', 'last_name')}),
         (
             _('Permissions'),
@@ -43,9 +43,15 @@ class GroupAdmin(admin.ModelAdmin):
     # Filter permissions horizontal as well.
     filter_horizontal = ['permissions']
 
+
+class NroAdmin(admin.ModelAdmin):
+    list_display = ['get_region_display']
+
+
 # Register the new Group ModelAdmin.
 admin.site.register(Group, GroupAdmin)
 
+admin.site.register(models.NtcRegionalOffice, NroAdmin)
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.RfcDevice)
 admin.site.register(models.MobileDevice)

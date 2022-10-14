@@ -6,18 +6,19 @@ from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.response import Response
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
+
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from django.utils.dateparse import parse_date
 from datetime import date, timedelta
 import datetime
 import calendar
+
 from core import utils, models
 from django.db.models import Q, Avg
 from rest_framework_csv import renderers as r
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
 
 from mobile.serializers import (
     MobileResultsSerializer,
@@ -71,6 +72,7 @@ class MobileResultsView(generics.CreateAPIView):
                 location=loc)
 
 
+@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     """
     View for Staff User
@@ -118,15 +120,18 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
             tester__email=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
+        """List results from field tester"""
         lookup_field = self.kwargs["test_id"]
-        print(lookup_field)
-        user = get_object_or_404(NTCSpeedTest, test_id=lookup_field)
-        serializer = NtcMobileResultsSerializer(user)
+        instance = NTCSpeedTest.objects.filter(
+                test_id=lookup_field).order_by(
+            "-date_created"
+        )
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
         """List all results from staff's regions"""
-        queryset = self.get_queryset()
+        queryset = NTCSpeedTest.objects.all().order_by("-date_created")
         serializer = NtcMobileResultsSerializer(
             queryset, many=True)
         return Response(serializer.data)
@@ -142,6 +147,7 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 #         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
 
+@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class ManageMobileDeviceView(viewsets.ModelViewSet):
     """Manage Enrollment of Mobile Devices for Staffs"""
     serializer_class = MobileDeviceSerializer
@@ -156,7 +162,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
                 email=self.request.user
             )
             return MobileDevice.objects.filter(
-                user__ntc_region=staff.ntc_region
+                user__nro=staff.nro
             )
 
     def retrieve(self, request, *args, **kwargs):
@@ -329,90 +335,3 @@ class MobileResultCSV(APIView):
                     }
                    for response in response]
         return Response(content)
-
-
-@api_view(('GET',))
-def speedtest_performance_detail(request, name):
-    if request.method == 'GET':
-
-        query = NTCSpeedTest.objects.filter(Q(location__municipality__icontains=name))
-        unique = NTCSpeedTest.objects.filter(Q(location__municipality__icontains=name)).distinct().count()
-        lastyear = int((datetime.datetime.now() - timedelta(days=365)).strftime("%Y"))
-        thisyear = int(datetime.datetime.now().strftime('%Y'))
-        start = date(lastyear, 6, 1)
-        end = date(thisyear, 6, 30) + datetime.timedelta(days=1)
-        download = query.filter(date_created__range=[start, end]).aggregate(Avg('result__download'))
-        upload = query.filter(date_created__range=[start, end]).aggregate(Avg('result__upload'))
-        ping = query.filter(date_created__range=[start, end]).aggregate(Avg('result__ping'))
-        lytest = query.filter(date_created__range=[start, end])
-    # lyjune = query.filter(date__range=[start, end]).annotate(month=TruncMonth('date',
-    # output_field=DateField())).values('month').annotate(Avg('download_speed'))
-        context = {
-            'unique': unique,
-            'lytest': lytest,
-            'download': download,
-            'upload': upload,
-            'ping': ping,
-            'name': name,
-            'globe': query.filter(date_created__range=[start,
-                                  end]).filter(Q(result__operator__icontains="globe")).aggregate(Avg('result__download')),
-            'converge': query.filter(date_created__range=[start,
-                                                          end]).filter(Q(result__operator__icontains="converge")).aggregate(Avg('result__download')),
-            'pldt': query.filter(date_created__range=[start,
-                                                      end]).filter(Q(result__operator__icontains="philippine long distance telephone")).aggregate(Avg('result__download')),
-            'smart': query.filter(date_created__range=[start,
-                                                       end]).filter(Q(result__operator__icontains="smart")).aggregate(Avg('result__download')),
-            'lyjun': query.filter(date_created__range=[date(lastyear, 6, 1),
-                                                       date(lastyear, 6, calendar.monthrange(lastyear, 6)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lyjul': query.filter(date_created__range=[date(lastyear, 7, 1),
-                                                       date(lastyear, 7, calendar.monthrange(lastyear, 7)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lyaug':  query.filter(date_created__range=[date(lastyear, 8, 1),
-                                                        date(lastyear, 8, calendar.monthrange(lastyear, 8)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lysep':  query.filter(date_created__range=[date(lastyear, 9, 1),
-                                                        date(lastyear, 9, calendar.monthrange(lastyear, 9)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lyoct':  query.filter(date_created__range=[date(lastyear, 10, 1),
-                                                        date(lastyear, 10, calendar.monthrange(lastyear, 10)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lynov':   query.filter(date_created__range=[date(lastyear, 11, 1),
-                                                         date(lastyear, 11, calendar.monthrange(lastyear, 11)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lydec':   query.filter(date_created__range=[date(lastyear, 12, 1),
-                                                         date(lastyear, 12, calendar.monthrange(lastyear, 12)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thjan':    query.filter(date_created__range=[date(thisyear, 1, 1),
-                                                          date(thisyear, 1, calendar.monthrange(thisyear, 1)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thfeb':   query.filter(date_created__range=[date(thisyear, 2, 1),
-                                                         date(thisyear, 2, calendar.monthrange(thisyear, 2)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thmar':   query.filter(date_created__range=[date(thisyear, 3, 1),
-                                                         date(thisyear, 3, calendar.monthrange(thisyear, 3)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thapr':  query.filter(date_created__range=[date(thisyear, 4, 1),
-                                                        date(thisyear, 4, calendar.monthrange(thisyear, 4)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thmay':  query.filter(date_created__range=[date(thisyear, 5, 1),
-                                                        date(thisyear, 5, calendar.monthrange(thisyear, 5)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'thjun':   query.filter(date_created__range=[date(thisyear, 6, 1),
-                                                         date(thisyear, 6, calendar.monthrange(thisyear, 6)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__download')),
-            'lyjunu':  query.filter(date_created__range=[date(lastyear, 6, 1),
-                                                         date(lastyear, 6, calendar.monthrange(lastyear, 6)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lyjulu': query.filter(date_created__range=[date(lastyear, 7, 1),
-                                                        date(lastyear, 7, calendar.monthrange(lastyear, 7)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lyaugu': query.filter(date_created__range=[date(lastyear, 8, 1),
-                                                        date(lastyear, 8, calendar.monthrange(lastyear, 8)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lysepu':  query.filter(date_created__range=[date(lastyear, 9, 1),
-                                                         date(lastyear, 9, calendar.monthrange(lastyear, 9)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lyoctu':  query.filter(date_created__range=[date(lastyear, 10, 1),
-                                                         date(lastyear, 10, calendar.monthrange(lastyear, 10)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lynovu':   query.filter(date_created__range=[date(lastyear, 11, 1),
-                                                          date(lastyear, 11, calendar.monthrange(lastyear, 11)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'lydecu':  query.filter(date_created__range=[date(lastyear, 12, 1),
-                                                         date(lastyear, 12, calendar.monthrange(lastyear, 12)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thjanu': query.filter(date_created__range=[date(thisyear, 1, 1),
-                                                        date(thisyear, 1, calendar.monthrange(thisyear, 1)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thfebu': query.filter(date_created__range=[date(thisyear, 2, 1),
-                                                        date(thisyear, 2, calendar.monthrange(thisyear, 2)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thmaru': query.filter(date_created__range=[date(thisyear, 3, 1),
-                                                        date(thisyear, 3, calendar.monthrange(thisyear, 3)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thapru': query.filter(date_created__range=[date(thisyear, 4, 1),
-                                                        date(thisyear, 4, calendar.monthrange(thisyear, 4)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thmayu': query.filter(date_created__range=[date(thisyear, 5, 1),
-                                                        date(thisyear, 5, calendar.monthrange(thisyear, 5)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-            'thjunu': query.filter(date_created__range=[date(thisyear, 6, 1),
-                                                        date(thisyear, 6, calendar.monthrange(thisyear, 6)[1]) + datetime.timedelta(days=1)]).aggregate(Avg('result__upload')),
-        }
-    return Response(context)

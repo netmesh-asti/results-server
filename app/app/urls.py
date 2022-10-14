@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/rfc6349/', include('rfc6349.urls')),
     path('api/server/', include('server.urls')),
     path('api/accounts/', include('django.contrib.auth.urls')),
+    path('api/nro/', include('nro.urls'))
 ]
 
 # urlpatterns += [path('api-auth/', include('rest_framework.urls')), ]

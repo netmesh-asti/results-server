@@ -52,3 +52,11 @@ class RfcDeviceNameSerializer(serializers.ModelSerializer):
     class Meta:
         model = RfcDevice
         fields = ('check_name', )
+
+
+class RfcDeviceIdSerializer(serializers.ModelSerializer):
+    """Serializer for RFC Device Check Name"""
+
+    class Meta:
+        model = RfcDevice
+        fields = ('name', )
