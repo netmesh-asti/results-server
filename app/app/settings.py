@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_spectacular',
+    'rest_framework_csv',
     'rest_framework',
     'corsheaders',
     'core',
@@ -145,7 +146,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly'
     ],
-    'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer']
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework_csv.renderers.CSVRenderer'
+    ]
 }
 TEST_CLIENT_NAME = "NETMESH_WEB"
 REST_DURIN = {

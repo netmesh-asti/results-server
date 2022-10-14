@@ -1,26 +1,29 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
 from rest_framework import generics, permissions, viewsets, status
-from rest_framework.exceptions import NotFound
-from rest_framework.status import HTTP_404_NOT_FOUND
+from rest_framework.exceptions import APIException
+
 from rest_framework.response import Response
 
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
 
 from drf_spectacular.utils import extend_schema_view, extend_schema
-from drf_spectacular.utils import  OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter
 from django.utils.dateparse import parse_date
-from datetime import date, timedelta
+from datetime import date
 import datetime
-import calendar
+
+from django.shortcuts import get_object_or_404
 
 from core import utils, models
-from django.db.models import Q, Avg
+from django.db.models import Q
 from rest_framework_csv import renderers as r
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+from core.utils import get_client_ip
 
 from mobile.serializers import (
     MobileResultsSerializer,
@@ -53,25 +56,32 @@ class MobileResultsView(generics.CreateAPIView):
             PublicSpeedTest.objects.create(result_id=obj.id)
         else:
             client = AuthToken.objects.select_related('client').get(
-                token=token).client
-            device = MobileDevice.objects.get(client=client)
-            if not device:
-                return NotFound(
-                    detail="Device not registered to client.",
-                    code=HTTP_404_NOT_FOUND)
+                token=token
+            ).client
+
+            device = get_object_or_404(MobileDevice, client=client)
             user = get_object_or_404(
                 models.User,
                 email=self.request.user)
-            obj = serializer.save()
+            try:
+                obj = serializer.save()
+            except IntegrityError:
+                raise APIException("Data already exists.")
             lat = float(self.request.data.get('lat'))
             lon = float(self.request.data.get('lon'))
+            if lat is None or lon is None:
+                raise APIException("lat and lon are require")
             loc = utils.get_location(lat, lon)
+            if loc is None:
+                raise APIException("No Location found!")
             loc = models.Location.objects.create(**loc)
+            ip = get_client_ip(self.request)
             NTCSpeedTest.objects.create(
                 result_id=obj.id,
                 tester=user,
                 test_device=device,
-                location=loc)
+                location=loc,
+                client_ip=ip)
 
 
 @extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
@@ -93,8 +103,11 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
-        instance = NTCSpeedTest.objects.filter(
-                tester_id=self.kwargs['pk'])
+        try:
+            instance = NTCSpeedTest.objects.get(
+                    tester_id=self.kwargs['pk'])
+        except NTCSpeedTest.DoesNotExist:
+            raise APIException("No test was found.")
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -124,10 +137,12 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
         lookup_field = self.kwargs["test_id"]
-        instance = NTCSpeedTest.objects.filter(
-                test_id=lookup_field).order_by(
-            "-date_created"
-        )
+        try:
+            instance = NTCSpeedTest.objects.get(
+                    test_id=lookup_field)
+        except NTCSpeedTest.DoesNotExist:
+            raise APIException("No result was found.")
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -148,8 +163,6 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 #         lookup_field = self.kwargs["test_id"]
 #         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
-
-@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class ManageMobileDeviceView(viewsets.ModelViewSet):
     """Manage Enrollment of Mobile Devices for Staffs"""
     serializer_class = MobileDeviceSerializer
@@ -168,10 +181,13 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             )
 
     def retrieve(self, request, *args, **kwargs):
-        instance = MobileDevice.objects.filter(
-                user_id=self.kwargs['pk'],
+        try:
+            instance = MobileDevice.objects.get(
+                    user_id=self.kwargs['pk'],
             )
-        serializer = self.get_serializer(instance, many=True)
+        except MobileDevice.DoesNotExist:
+            raise APIException("No device was found.")
+        serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def perform_create(self, serializer):

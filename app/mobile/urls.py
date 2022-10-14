@@ -53,10 +53,6 @@ urlpatterns = [
          views.MobileResultCSV.as_view(),
          name='mobileresultcsv'
          ),
-    path('result/speedtest/<str:name>',
-         views.speedtest_performance_detail,
-         name='speedtestperformancedetail'
-         ),
     # path('android/list', views.ListAndroidResView.as_view(), name='list')
 ]
 

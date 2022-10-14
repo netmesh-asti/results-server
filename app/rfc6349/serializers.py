@@ -42,6 +42,7 @@ class RfcTestSerializer(serializers.ModelSerializer):
             'id',
             'date_created',
             'test_id',
+            "client_ip"
         )
 
 

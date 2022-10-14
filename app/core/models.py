@@ -517,6 +517,7 @@ class NTCSpeedTest(models.Model):
                                on_delete=models.CASCADE)
     test_device = models.ForeignKey(MobileDevice,
                                     on_delete=models.CASCADE)
+    client_ip = models.GenericIPAddressField("IP address of Speedtest Client.")
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
@@ -538,6 +539,7 @@ class RfcTest(models.Model):
                                on_delete=models.CASCADE)
     test_device = models.ForeignKey(RfcDevice,
                                     on_delete=models.CASCADE)
+    client_ip = models.GenericIPAddressField("IP address of RFC Client.")
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)

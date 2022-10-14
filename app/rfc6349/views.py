@@ -5,14 +5,19 @@ from rest_framework import (
     permissions,
     viewsets,
     status,
-    response
 )
 from rest_framework.exceptions import APIException, NotFound
 
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    extend_schema_view
+)
+
+from core.utils import get_client_ip
 
 from core.models import (
     RfcResult,
@@ -27,7 +32,6 @@ from rfc6349.serializers import (
     RfcDeviceNameSerializer,
 )
 
-from drf_spectacular.utils import extend_schema_view, extend_schema
 from django.utils.dateparse import parse_date
 from datetime import date
 import datetime
@@ -64,13 +68,19 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         obj = serializer.save()
         lat = float(self.request.data.get('lat'))
         lon = float(self.request.data.get('lon'))
+        if lat is None or lon is None:
+            raise APIException("lat and lon are require")
         loc = utils.get_location(lat, lon)
+        if loc is None:
+            raise APIException("No Location found!")
         loc = Location.objects.create(**loc)
+        ip = get_client_ip(self.request)
         RfcTest.objects.create(
             result_id=obj.id,
             tester=user,
             test_device=device,
-            location=loc
+            location=loc,
+            client_ip=ip
         )
 
 
@@ -118,7 +128,7 @@ class RfcDeviceView(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return response.Response(serializer.data)
+        return Response(serializer.data)
 
     @extend_schema(
         parameters=[
@@ -131,9 +141,11 @@ class RfcDeviceView(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return response.Response(serializer.data,
-                                 status=status.HTTP_201_CREATED,
-                                 headers=headers)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
 
     def perform_create(self, serializer):
         name = self.request.data['name']
@@ -146,7 +158,6 @@ class RfcDeviceView(viewsets.ModelViewSet):
         serializer.save(client=client, owner=user)
 
 
-@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
     """
     View for Staff User
@@ -177,7 +188,7 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset().order_by("-timestamp")
         serializer = RfcTestSerializer(
             queryset, many=True)
-        return response.Response(serializer.data)
+        return Response(serializer.data)
 
 
 class UserRFC6349TestsView(viewsets.ReadOnlyModelViewSet):
@@ -233,7 +244,8 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def RFC6349ResultsList(request):
     if request.method == 'GET':
-        rfcresults = RfcTest.objects.filter(tester__ntc_region=request.user.ntc_region)
+        rfcresults = RfcTest.objects.filter(
+            tester__nro__region=request.user.ntc_region)
         total = RfcTest.objects.all().count()
         draw = request.query_params.get('draw')
         start = int(request.query_params.get('start'))
@@ -306,24 +318,24 @@ class RFC6349ResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
 
-        response = RfcTest.objects.filter(tester__ntc_region=region).filter().order_by('-date_created')
+        res = RfcTest.objects.filter(tester__ntc_region=region).filter().order_by('-date_created')
         if isp:
-            response = response.filter(Q(result__operator__icontains=isp))
+            res = res.filter(Q(result__operator__icontains=isp))
         if minDate:
-            response = response.filter(date_created__range=(minDate, date.today() + datetime.timedelta(days=1)))
+            res = res.filter(date_created__range=(minDate, date.today() + datetime.timedelta(days=1)))
         if minDate and maxDate:
-            response = response.filter(date_created__range=(minDate, maxDate + datetime.timedelta(days=1)))
+            res = res.filter(date_created__range=(minDate, maxDate + datetime.timedelta(days=1)))
 
         if isp:
-            response = response.filter(Q(result__operator__icontains=isp))
+            res = res.filter(Q(result__operator__icontains=isp))
         if province:
-            response = response.filter(Q(location__province__icontains=province))
+            res = res.filter(Q(location__province__icontains=province))
         if municipality:
-            response = response.filter(Q(location__municipality__icontains=municipality))
+            res = res.filter(Q(location__municipality__icontains=municipality))
         if barangay:
-            response = response.filter(Q(location__barangay__icontains=barangay))
+            res = res.filter(Q(location__barangay__icontains=barangay))
         if search_query:
-            response = response.filter(Q(test_id__icontains=search_query))
+            res = res.filter(Q(test_id__icontains=search_query))
 
         content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
                     'test_id': response.test_id,
@@ -351,5 +363,5 @@ class RFC6349ResultCSV(APIView):
                     'tcp_efficiency': response.result.tcp_efficiency,
                     'buffer_delay': response.result.buffer_delay,
                     }
-                   for response in response]
+                   for response in res]
         return Response(content)
