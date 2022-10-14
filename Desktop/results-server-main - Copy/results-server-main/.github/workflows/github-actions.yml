@@ -1,0 +1,58 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: 'Create env file'
+      run: |
+        touch .env
+        echo GMAPS_TOKEN=${{ secrets.GMAPS_TOKEN }} >> .env
+        cat .env
+    - name: Build the stack
+      run: docker-compose up -d
+    - name: Start DB
+      run: docker-compose run --rm rs sh -c "python manage.py wait_for_db"
+    - name: Migrate
+      run: docker-compose run --rm rs sh -c "python manage.py migrate"
+    - name: Test
+      run: docker-compose run --rm rs sh -c "python manage.py test"
+    - name: Lint
+      run: docker-compose run --rm rs sh -c "flake8"
+    - name: Send mail
+      if: ${{ failure() }}
+      uses: dawidd6/action-send-mail@v3
+      with:
+          # Required mail server address:
+          server_address: smtp.office365.com
+          # Required mail server port:
+          server_port: 587
+          # Optional (recommended): mail server username:
+          username: ${{secrets.MAIL_USERNAME}}
+          # Optional (recommended) mail server password:
+          password: ${{secrets.MAIL_PASSWORD}}
+          # Required mail subject:
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          # email body as text
+          body: ${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
+          # Required recipients' addresses:
+          to: maryjane.alpad@asti.dost.gov.ph
+          # Required sender full name (address can be skipped):
+          from: Jean Jay Quitayen # <user@example.com>
