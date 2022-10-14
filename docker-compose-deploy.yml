@@ -15,7 +15,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${DJANGO_SECRET_KEY}
-      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - ALLOWED_HOSTS=${DOMAIN}
       - DEBUG=1
       - GMAPS_TOKEN=${GMAPS_TOKEN}
     depends_on:
@@ -39,9 +39,31 @@ services:
       - netmeshapp
     ports:
       - 80:8000
+      - 443:443
     volumes:
+      - certbot-web:/vol/www
+      - proxy-dhparams:/vol/proxy
+      - certbot-certs:/etc/letsencrypt
       - static-data:/vol/static
+    environment:
+      - DOMAIN=${DOMAIN}
+
+  certbot:
+    build:
+      context: ./proxy/certbot
+    command: echo "Skipping..."
+    environment:
+      - EMAIL=${ACME_DEFAULT_EMAIL}
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - certbot-web:/vol/www
+      - certbot-certs:/etc/letsencrypt/
+    depends_on:
+      - proxy
 
 volumes:
+  certbot-web:
+  proxy-dhparams:
+  certbot-certs:
   postgres-data:
   static-data:
