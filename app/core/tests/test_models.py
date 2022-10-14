@@ -9,10 +9,18 @@ from durin.models import Client
 from core import models
 
 
-class testUserModel(TestCase):
+class UserModelTest(TestCase):
+
+    def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
 
     def test_create_user_success(self):
         """Test that normal user is created"""
+
         email = 'test@gmail.com'
         password = 'testpassword123'
         first_name = 'NTC',
@@ -21,7 +29,8 @@ class testUserModel(TestCase):
             email=email,
             password=password,
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            nro=self.nro
         )
         self.assertEqual(user.email, email)
         self.assertEqual(user.first_name, first_name)
@@ -38,7 +47,8 @@ class testUserModel(TestCase):
             email=email,
             password=password,
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            nro=self.nro.id
         )
 
         self.assertEqual(user.email, email)
@@ -49,7 +59,10 @@ class testUserModel(TestCase):
     def test_new_user_email_serialized(self):
         """Test that the new user email is normalize (lowercase afer @)"""
         email = 'test@gmaIl.coM'
-        user = get_user_model().objects.create_user(email, 'test123')
+        user = get_user_model().objects.create_user(
+            email,
+            self.nro,
+            'test123')
 
         self.assertEqual(user.email, email.lower())
 
@@ -61,11 +74,17 @@ class testUserModel(TestCase):
 
 class NtcObjectsTest(TestCase):
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user = get_user_model().objects.create_user(
             email='test@gmail.com',
             first_name='ntc',
             last_name='netmesh',
-            password='testpass123'
+            password='testpass123',
+            nro=self.nro
         )
         self.client = Client.objects.create(name="DjangoTest")
 
@@ -87,11 +106,17 @@ class NtcObjectsTest(TestCase):
 
 class TestMobileModel(TestCase):
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user = get_user_model().objects.create_user(
             email='test@example.com',
             first_name='ntc',
             last_name='netmesh',
-            password='testpass123'
+            password='testpass123',
+            nro=self.nro
         )
         self.server = models.Server.objects.create(
             **{
@@ -156,11 +181,17 @@ class ServerModelTests(TestCase):
     """Test Server Model creation"""
 
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user = get_user_model().objects.create_user(
             email='test@gmail.com',
             first_name='ntc',
             last_name='netmesh',
-            password='testpass123'
+            password='testpass123',
+            nro=self.nro
         )
 
     def test_create_server_success(self):

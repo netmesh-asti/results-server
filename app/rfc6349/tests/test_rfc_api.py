@@ -17,12 +17,18 @@ class PrivateTestRfcApi(TestCase):
     """Test RFC6349 Endpoints"""
 
     def setUp(self):
+        self.nro_info = {
+            "address": "test address",
+            "region": "1",
+        }
+        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
         self.user = get_user_model().objects.create_user(
             **{
                 "email": "admin@example.com",
                 "first_name": "TestFN",
                 "last_name": "TestLN",
-                "password": "testpassword123"
+                "password": "testpassword123",
+                "nro": self.nro
             }
         )
         self.admin = get_user_model().objects.create_superuser(
@@ -30,7 +36,8 @@ class PrivateTestRfcApi(TestCase):
                 "email": "test@example.com",
                 "first_name": "TestFN",
                 "last_name": "TestLN",
-                "password": "testpassword123"
+                "password": "testpassword123",
+                "nro": self.nro.id
             }
         )
 
