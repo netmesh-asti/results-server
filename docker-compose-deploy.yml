@@ -18,7 +18,6 @@ services:
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ALLOWED_HOSTS=${DOMAIN}
-      - DEBUG=1
       - GMAPS_TOKEN=${GMAPS_TOKEN}
     depends_on:
       - netmeshdb
