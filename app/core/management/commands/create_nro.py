@@ -11,7 +11,7 @@ class Command(BaseCommand):
         print("Creating NRO for superuser if not exists")
         for region_id, region_desc in ntc_region_choices:
             nro = NtcRegionalOffice.objects.filter(region=region_id)
-            if not nro:
+            if not nro.exists():
                 print("No NRO found. Creating...")
                 NtcRegionalOffice.objects.create(
                     region=region_id,
