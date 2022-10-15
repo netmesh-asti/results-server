@@ -77,7 +77,7 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.action == "list":
             return get_user_model().objects.filter(
-                nro=self.request.user.nro)
+                is_staff=False).filter(nro=self.request.user.nro)
         elif self.action == "create":
             return get_user_model().objects.all()
         return get_user_model().objects.filter(id=int(self.kwargs['pk']))
