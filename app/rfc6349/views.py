@@ -237,6 +237,12 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+search_csv = ''
+order_column = 0
+dir_order = 'asc'
+starttable = 0
+lengthtable = 10
+
 @extend_schema_view(
     get=extend_schema(description='Fetch All RFC6349 Results for Staff Region Datatable ONLY (Ignore)'),
 )
@@ -245,7 +251,8 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
 def RFC6349ResultsList(request):
     if request.method == 'GET':
         rfcresults = RfcTest.objects.filter(
-            tester__nro__region=request.user.ntc_region)
+            tester__nro__region=request.user.nro.region)
+        global search_csv, column_order, dir_order, starttable    
         total = RfcTest.objects.all().count()
         draw = request.query_params.get('draw')
         start = int(request.query_params.get('start'))
@@ -259,6 +266,11 @@ def RFC6349ResultsList(request):
         order = request.GET.get('order[0][dir]')
         minDate = parse_date(request.query_params.get('minDate'))
         maxDate = parse_date(request.query_params.get('maxDate'))
+        search_csv = search_query
+        column_order = order_column
+        dir_order = order
+        starttable = start
+        lengthtable = length
 
         if order_column == '0':
             order_column = "date_created"
@@ -309,6 +321,7 @@ class RFC6349ResultCSV(APIView):
     header = ['date_created', 'test_id', 'tester_email']
 
     def get(self, request):
+        global search_csv, column_order, dir_order, starttable
         isp = request.query_params.get('isp')
         search_query = request.GET.get('search[value]')
         province = request.query_params.get('province')
@@ -318,7 +331,12 @@ class RFC6349ResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
 
-        res = RfcTest.objects.filter(tester__ntc_region=region).filter().order_by('-date_created')
+        if column_order == '0':
+            column_order = "date_created"
+        if dir_order == 'asc':
+            column_order = '-' + column_order
+
+        res = RfcTest.objects.filter(tester__nro__region=region).filter().order_by('-date_created')
         if isp:
             res = res.filter(Q(result__operator__icontains=isp))
         if minDate:
@@ -334,15 +352,17 @@ class RFC6349ResultCSV(APIView):
             res = res.filter(Q(location__municipality__icontains=municipality))
         if barangay:
             res = res.filter(Q(location__barangay__icontains=barangay))
-        if search_query:
-            res = res.filter(Q(test_id__icontains=search_query))
+        if search_csv:
+            res = res.filter(Q(test_id__icontains=search_csv))
+
+        res = res.order_by(column_order)[starttable:starttable+lengthtable]
 
         content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
                     'test_id': response.test_id,
                     'tester_email': response.tester.email,
                     'tester_first_name': response.tester.first_name,
                     'tester_last_name': response.tester.last_name,
-                    'ntc_region': response.tester.ntc_region,
+                    'ntc_region': response.tester.nro.region,
                     'province': response.location.province,
                     'municipality': response.location.municipality,
                     'barangay': response.location.barangay,
