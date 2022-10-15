@@ -21,6 +21,7 @@ services:
       - DB_USER=postgres
       - DB_PASS=supersecretpassword
       - DEBUG=1
+      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - GMAPS_TOKEN=${GMAPS_TOKEN}
     depends_on:
       - db
