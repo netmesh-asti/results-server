@@ -29,7 +29,7 @@ server {
     include /etc/nginx/mime.types;
 
     location /static {
-        alias /vol/static/portal_statics;
+        alias /vol/static/portal_statics/static;
     }
 
     location /gis/staticfiles {
