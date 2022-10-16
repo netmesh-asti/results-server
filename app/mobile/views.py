@@ -298,7 +298,7 @@ def MobileResultsList(request):
 
 class MyUserRenderer (r.CSVRenderer):
     header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name',
-              'ntc_region', 'td_android_version',
+              'nro', 'td_android_version',
               'td_imei', 'td_phone_model', 'download', 'upload', 'ping',
               'jitter', 'mcc', 'mnc', 'tac', 'network_type', 'operator',
               'rssi', 'signal_quality',  'ssid', 'bssid', 'province',
