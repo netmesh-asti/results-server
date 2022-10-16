@@ -100,7 +100,7 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = get_user_model().objects.get(email=self.request.user)
         return NTCSpeedTest.objects.filter(
-            tester__ntc_region=user.ntc_region)
+            tester__ntc_region=user.nro.region)
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
@@ -298,7 +298,7 @@ def MobileResultsList(request):
 
 class MyUserRenderer (r.CSVRenderer):
     header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name',
-              'nro', 'td_android_version',
+              'ntc_region', 'td_android_version',
               'td_imei', 'td_phone_model', 'download', 'upload', 'ping',
               'jitter', 'mcc', 'mnc', 'tac', 'network_type', 'operator',
               'rssi', 'signal_quality',  'ssid', 'bssid', 'province',

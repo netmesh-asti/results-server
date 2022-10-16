@@ -173,7 +173,7 @@ class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = get_user_model().objects.get(email=self.request.user)
         return RfcTest.objects.filter(
-            tester__ntc_region=user.ntc_region)
+            tester__ntc_region=user.nro.region)
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
