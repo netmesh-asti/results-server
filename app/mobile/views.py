@@ -29,7 +29,8 @@ from mobile.serializers import (
     MobileResultsSerializer,
     NtcMobileResultsSerializer,
     MobileDeviceSerializer,
-    MobileResultsListSerializer
+    MobileResultsListSerializer,
+    ListMobileSerializer
 )
 
 from core.models import (
@@ -169,6 +170,12 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAdminUser,)
     authentication_classes = (TokenAuthentication, )
 
+    def get_serializer_class(self):
+        if self.action == "create":
+            return MobileDeviceSerializer
+        elif self.action == "list":
+            return ListMobileSerializer
+
     def get_queryset(self):
         if self.action == "create":
             return MobileDevice.objects.all()
@@ -219,13 +226,6 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
         return get_object_or_404(MobileDevice, serial_number=lookup_field)
 
 
-search_csv = ''
-column_order = 0
-dir_order = 'asc'
-starttable = 0
-lengthtable = 10
-
-
 @extend_schema_view(
     get=extend_schema(description='Mobile Datatable (Ignore)',
                       responses=MobileResultsListSerializer),
@@ -234,7 +234,7 @@ lengthtable = 10
 @permission_classes([IsAuthenticated, IsAdminUser])
 def MobileResultsList(request):
     if request.method == 'GET':
-        global search_csv, column_order, dir_order, starttable
+        global search_csv, column_order, dir_order, starttable, lengthtable
         mobileresults = NTCSpeedTest.objects.filter(tester__nro__region=request.user.nro.region)
         total = NTCSpeedTest.objects.all().count()
         draw = request.query_params.get('draw')
@@ -310,7 +310,6 @@ class MobileResultCSV(APIView):
     def get(self, request):
         global search_csv, column_order, dir_order, starttable, lengthtable
         isp = request.query_params.get('isp')
-        search_query = request.GET.get('search[value]')
         province = request.query_params.get('province')
         municipality = request.query_params.get('municipality')
         minDate = parse_date(request.query_params.get('mindate'))
@@ -318,13 +317,11 @@ class MobileResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
         response = NTCSpeedTest.objects.filter(tester__nro__region=region).order_by('-date_created')
-        print(search_csv, column_order, dir_order)
-        
         if column_order == '0':
             column_order = "date_created"
         if dir_order == 'asc':
             column_order = '-' + column_order
-        
+
         if isp:
             response = response.filter(Q(result__operator__icontains=isp))
 

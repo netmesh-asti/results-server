@@ -4,14 +4,34 @@ from core.models import (
     MobileResult,
     MobileDevice,
     NTCSpeedTest,
+    User,
 )
 
-from user.serializers import UserSerializer
 from location.serializers import LocationSerializer
+from user.serializers import UserSerializer 
+
+
+class ListMobileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = MobileDevice
+        fields = (
+            "id",
+            "name",
+            "serial_number",
+            "imei",
+            "phone_model",
+            "android_version",
+            "ram",
+            "storage",
+            "user",
+         )
+
 
 
 class MobileDeviceSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""
+
     class Meta:
         model = MobileDevice
 
@@ -24,10 +44,11 @@ class MobileDeviceSerializer(serializers.ModelSerializer):
             "android_version",
             "ram",
             "storage",
-            "user"
-        )
-        read_only_fields = ('id',)
+            "user",
+          
+         )
 
+   
 
 class MobileResultsSerializer(serializers.ModelSerializer):
     """Serializer for the Mobile Results Object"""
