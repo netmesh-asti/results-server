@@ -43,6 +43,10 @@ services:
       - proxy-dhparams:/vol/proxy
       - certbot-certs:/etc/letsencrypt
       - static-data:/vol/static
+      - portal-web:/vol/static/portal_statics
+      - darius-static:/vol/static/staticfiles
+      - ./portal/build:/etc/nginx/html
+        #- ./portal/build/static:/var/static
     environment:
       - DOMAIN=${DOMAIN}
 
@@ -59,9 +63,26 @@ services:
     depends_on:
       - proxy
 
+  portal:
+    build:
+      dockerfile: Dockerfile
+      context: "./portal"
+    tty: true
+    ports:
+      - 3000:3000
+    volumes:
+      - /app/node_modules
+      - portal-web:/app/build
+      - darius-static:/app/darius/staticfiles
+    depends_on:
+      - netmeshapp
+ 
+
 volumes:
   certbot-web:
   proxy-dhparams:
   certbot-certs:
   postgres-data:
   static-data:
+  portal-web:
+  darius-static:

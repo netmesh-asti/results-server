@@ -7,17 +7,17 @@ from drf_spectacular.views import (
         )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(
+    path('portal/admin/', admin.site.urls),
+    path('portal/api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
+    path('portal/api/docs/', SpectacularSwaggerView.as_view(
         url_name='api-schema'),
         name='api-docs'),
-    path('api/user/', include('user.urls')),
-    path('api/mobile/', include('mobile.urls')),
-    path('api/rfc6349/', include('rfc6349.urls')),
-    path('api/server/', include('server.urls')),
-    path('api/accounts/', include('django.contrib.auth.urls')),
-    path('api/nro/', include('nro.urls'))
+    path('portal/api/user/', include('user.urls')),
+    path('portal/api/mobile/', include('mobile.urls')),
+    path('portal/api/rfc6349/', include('rfc6349.urls')),
+    path('portal/api/server/', include('server.urls')),
+    path('portal/api/accounts/', include('django.contrib.auth.urls')),
+    path('portal/api/nro/', include('nro.urls'))
 ]
 
 # urlpatterns += [path('api-auth/', include('rest_framework.urls')), ]
