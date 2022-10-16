@@ -175,6 +175,8 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             return MobileDeviceSerializer
         elif self.action == "list":
             return ListMobileSerializer
+        elif self.action == "retrieve":
+            return MobileDeviceSerializer
 
     def get_queryset(self):
         if self.action == "create":
@@ -194,14 +196,15 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
+
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     def perform_create(self, serializer):
         """Reg Client and User(owner)"""
         # Create a client from mobile device name
-        device_name = self.request.data['name']
-        client = Client.objects.create(name=device_name)
+        device_imei = self.request.data['imei']
+        client = Client.objects.create(name=device_imei)
         serializer.save(client=client)
 
 

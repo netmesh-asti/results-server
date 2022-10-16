@@ -9,7 +9,7 @@ from core.group_admin import GroupAdminForm
 
 class UserAdmin(BaseUserAdmin):
     ordering = ['id']
-    list_display = ['email', 'first_name', 'last_name', 'registration']
+    list_display = ['email', 'first_name', 'last_name', 'registration', 'nro']
     fieldsets = (
         (None, {'fields': ('email', 'nro', 'password')}),
         (_('Personal Info'), {'fields': ('first_name', 'last_name')}),
@@ -22,7 +22,7 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2')
+            'fields': ('email', 'nro', 'password1', 'password2')
         }),
     )
 
