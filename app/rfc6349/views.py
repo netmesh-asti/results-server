@@ -57,8 +57,9 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         token = self.request.auth
         client = AuthToken.objects.select_related('client').get(
             token=token).client
-        device = RfcDevice.objects.get(client=client)
-        if not device:
+        try:
+            device = RfcDevice.objects.get(client=client)
+        except device.DoesNotExist:
             return NotFound(
                 detail="Device not registered to client.",
                 code=status.HTTP_404_NOT_FOUND)
