@@ -192,7 +192,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    user_id=int(self.kwargs['']),
+                    user_id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
