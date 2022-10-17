@@ -37,7 +37,7 @@ class RfcTestSerializer(serializers.ModelSerializer):
         fields = ["id", "date_created",
                   "tester", "test_id",
                   "result", "location",
-                  "test_device"]
+                  "test_device", "client_ip"]
         read_only_fields = (
             'id',
             'date_created',
