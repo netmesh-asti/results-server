@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import (
     generics,
@@ -59,10 +60,8 @@ class Rfc6349ResView(generics.ListCreateAPIView):
             token=token).client
         try:
             device = RfcDevice.objects.get(client=client)
-        except RfcDevice.DoesNotExist:
-            return NotFound(
-                detail="Device not registered to client.",
-                code=status.HTTP_404_NOT_FOUND)
+        except RfcDevice.DoesNotExist as e:
+            raise Http404(e)
         user = get_object_or_404(
             User,
             email=self.request.user)
