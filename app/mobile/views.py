@@ -228,6 +228,7 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
         lookup_field = self.kwargs["serial_number"]
         return get_object_or_404(MobileDevice, serial_number=lookup_field)
 
+search_csv = ''
 
 @extend_schema_view(
     get=extend_schema(description='Mobile Datatable (Ignore)',
@@ -237,7 +238,7 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
 @permission_classes([IsAuthenticated, IsAdminUser])
 def MobileResultsList(request):
     if request.method == 'GET':
-        global search_csv, column_order, dir_order, starttable, lengthtable
+        global search_csv
         mobileresults = NTCSpeedTest.objects.filter(tester__nro__region=request.user.nro.region)
         total = NTCSpeedTest.objects.all().count()
         draw = request.query_params.get('draw')
@@ -253,10 +254,10 @@ def MobileResultsList(request):
         minDate = parse_date(request.query_params.get('minDate'))
         maxDate = parse_date(request.query_params.get('maxDate'))
         search_csv = search_query
-        column_order = order_column
-        dir_order = order
-        starttable = start
-        lengthtable = length
+        # column_order = order_column
+        # dir_order = order
+        # starttable = start
+        # lengthtable = length
 
         if order_column == '0':
             order_column = "date_created"
@@ -311,7 +312,8 @@ class MobileResultCSV(APIView):
     header = ['date_created', 'test_id', 'tester_email']
 
     def get(self, request):
-        global search_csv, column_order, dir_order, starttable, lengthtable
+        # column_order, dir_order, starttable, lengthtable
+        global search_csv
         isp = request.query_params.get('isp')
         province = request.query_params.get('province')
         municipality = request.query_params.get('municipality')
@@ -320,10 +322,11 @@ class MobileResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
         response = NTCSpeedTest.objects.filter(tester__nro__region=region).order_by('-date_created')
-        if column_order == '0':
-            column_order = "date_created"
-        if dir_order == 'asc':
-            column_order = '-' + column_order
+        # if column_order == '0':
+        #     column_order = "date_created"
+        # if dir_order == 'asc':
+        #     column_order = '-' + column_order
+        
 
         if isp:
             response = response.filter(Q(result__operator__icontains=isp))
@@ -348,7 +351,6 @@ class MobileResultCSV(APIView):
         if search_csv:
             response = response.filter(Q(test_id__icontains=search_csv))
 
-        response = response.order_by(column_order)[starttable:starttable+lengthtable]
 
         content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
                     'test_id': response.test_id,

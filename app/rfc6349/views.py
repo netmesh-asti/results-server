@@ -238,10 +238,6 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
 
 
 search_csv = ''
-order_column = 0
-dir_order = 'asc'
-starttable = 0
-lengthtable = 10
 
 @extend_schema_view(
     get=extend_schema(description='Fetch All RFC6349 Results for Staff Region Datatable ONLY (Ignore)'),
@@ -252,7 +248,7 @@ def RFC6349ResultsList(request):
     if request.method == 'GET':
         rfcresults = RfcTest.objects.filter(
             tester__nro__region=request.user.nro.region)
-        global search_csv, column_order, dir_order, starttable    
+        global search_csv 
         total = RfcTest.objects.all().count()
         draw = request.query_params.get('draw')
         start = int(request.query_params.get('start'))
@@ -321,7 +317,7 @@ class RFC6349ResultCSV(APIView):
     header = ['date_created', 'test_id', 'tester_email']
 
     def get(self, request):
-        global search_csv, column_order, dir_order, starttable
+        global search_csv
         isp = request.query_params.get('isp')
         search_query = request.GET.get('search[value]')
         province = request.query_params.get('province')
@@ -331,10 +327,10 @@ class RFC6349ResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
 
-        if column_order == '0':
-            column_order = "date_created"
-        if dir_order == 'asc':
-            column_order = '-' + column_order
+        # if column_order == '0':
+        #     column_order = "date_created"
+        # if dir_order == 'asc':
+        #     column_order = '-' + column_order
 
         res = RfcTest.objects.filter(tester__nro__region=region).filter().order_by('-date_created')
         if isp:
@@ -355,7 +351,7 @@ class RFC6349ResultCSV(APIView):
         if search_csv:
             res = res.filter(Q(test_id__icontains=search_csv))
 
-        res = res.order_by(column_order)[starttable:starttable+lengthtable]
+        # res = res.order_by(column_order)[starttable:starttable+lengthtable]
 
         content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
                     'test_id': response.test_id,
