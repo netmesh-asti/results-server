@@ -106,7 +106,7 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
         """List results from field tester"""
         try:
             instance = NTCSpeedTest.objects.get(
-                    tester_id=self.kwargs['pk'])
+                    tester_id=int(self.kwargs['pk']))
         except NTCSpeedTest.DoesNotExist:
             raise APIException("No test was found.")
         serializer = self.get_serializer(instance)
@@ -192,7 +192,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    user_id=self.kwargs['pk'],
+                    user_id=int(self.kwargs['']),
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
