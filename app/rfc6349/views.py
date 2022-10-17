@@ -59,7 +59,7 @@ class Rfc6349ResView(generics.ListCreateAPIView):
             token=token).client
         try:
             device = RfcDevice.objects.get(client=client)
-        except RfcDevice.DoesNotExist:
+        except device.DoesNotExist:
             return NotFound(
                 detail="Device not registered to client.",
                 code=status.HTTP_404_NOT_FOUND)
