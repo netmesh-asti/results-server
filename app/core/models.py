@@ -492,10 +492,10 @@ class Location(models.Model):
         validators=[
             MaxValueValidator(180.0),
             MinValueValidator(-180.0)])
-    region = models.CharField(max_length=255, blank=True)
-    province = models.CharField(max_length=255, blank=True)
-    municipality = models.CharField(max_length=255, blank=True)
-    barangay = models.CharField(max_length=255, blank=True)
+    region = models.CharField(max_length=255, null=True,  blank=True)
+    province = models.CharField(max_length=255,null=True,  blank=True)
+    municipality = models.CharField(max_length=255, null=True, blank=True)
+    barangay = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return "%s, %s, %s" % (self.barangay, self.municipality, self.province)
