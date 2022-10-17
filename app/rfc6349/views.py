@@ -71,8 +71,6 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         if lat is None or lon is None:
             raise APIException("lat and lon are require")
         loc = utils.get_location(lat, lon)
-        if loc is None:
-            raise APIException("No Location found!")
         loc = Location.objects.create(**loc)
         ip = get_client_ip(self.request)
         RfcTest.objects.create(
