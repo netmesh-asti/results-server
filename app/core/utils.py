@@ -14,16 +14,32 @@ def get_location(lat, lon):
         return None
     for i in reverse_geocode_result:
         if "administrative_area_level_1" in i['types']:
-            data["region"] = i['address_components'][0].get('long_name')
+            region = i['address_components'][0].get('long_name')
+            if not region:
+                data["region"] = None
+            else:
+                data["region"] = region
 
         if "administrative_area_level_2" in i['types']:
-            data["province"] = i['address_components'][0].get('long_name')
+            province = i['address_components'][0].get('long_name')
+            if not province:
+                data["province"] = None
+            else:
+                data["province"] = province
 
         if "administrative_area_level_3" in i['types']:
-            data["municipality"] = i['address_components'][0].get('long_name')
+            municipality = i['address_components'][0].get('long_name')
+            if not municipality:
+                data["municipality"] = None
+            else:
+                data["municipality"] = municipality
 
         if "neighborhood" in i['types'] or "administrative_area_level_5" in i['types']:
-            data["barangay"] = i['address_components'][0].get('long_name')
+            barangay = i['address_components'][0].get('long_name')
+            if not barangay:
+                data["barangay"] = None
+            else:
+                data["barangay"] = barangay
 
     return data
 
