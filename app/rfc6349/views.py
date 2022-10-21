@@ -202,7 +202,7 @@ class UserRFC6349TestsView(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return RfcTest.objects.filter(
-            tester__email=self.request.user)
+            tester__email=self.request.user).order_by("-date_created")
 
     def retrieve(self, request, *args, **kwargs):
         lookup_field = self.kwargs["test_id"]
@@ -245,7 +245,7 @@ search_csv = ''
 def RFC6349ResultsList(request):
     if request.method == 'GET':
         rfcresults = RfcTest.objects.filter(
-            tester__nro__region=request.user.nro.region)
+            tester__nro__region=request.user.nro.region).order_by("-date_created")
         global search_csv 
         total = RfcTest.objects.all().count()
         draw = request.query_params.get('draw')
