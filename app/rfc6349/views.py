@@ -202,7 +202,7 @@ class UserRFC6349TestsView(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return RfcTest.objects.filter(
-            tester__email=self.request.user).order_by("-date_created")
+            tester__email=self.request.user).order_by("date_created")
 
     def retrieve(self, request, *args, **kwargs):
         lookup_field = self.kwargs["test_id"]
