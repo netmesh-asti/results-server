@@ -245,7 +245,7 @@ search_csv = ''
 def RFC6349ResultsList(request):
     if request.method == 'GET':
         rfcresults = RfcTest.objects.filter(
-            tester__nro__region=request.user.nro.region)
+            tester__nro__region=request.user.nro.region).order_by("-date_created")
         global search_csv 
         total = RfcTest.objects.all().count()
         draw = request.query_params.get('draw')
