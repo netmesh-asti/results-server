@@ -377,7 +377,6 @@ class RfcResult(models.Model):
             MinValueValidator(-180.0)])
     location = models.CharField(max_length=250, blank=True)
     timestamp = models.DateTimeField(default=timezone.now)
-    created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.direction}"
@@ -540,6 +539,9 @@ class RfcTest(models.Model):
     test_device = models.ForeignKey(RfcDevice,
                                     on_delete=models.CASCADE)
     client_ip = models.GenericIPAddressField("IP address of RFC Client.")
+
+    class Meta:
+        ordering = ["-result__timestamp"]
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
