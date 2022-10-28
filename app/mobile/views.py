@@ -89,7 +89,6 @@ class MobileResultsView(generics.CreateAPIView):
                 client_ip=ip)
 
 
-@extend_schema(parameters=[OpenApiParameter("id", int, OpenApiParameter.PATH)])
 class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     """
     View for Staff User
