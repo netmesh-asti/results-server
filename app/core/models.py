@@ -166,7 +166,7 @@ class MobileDevice(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["owner", "serial_number", "imei"],
+            models.UniqueConstraint(fields=["serial_number", "imei"],
                                     name="unique mobile device")
                        ]
 
