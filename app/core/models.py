@@ -154,7 +154,7 @@ class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
     name = models.CharField(max_length=100, blank=False)
     client = models.OneToOneField(Client, on_delete=models.CASCADE)
-    user = models.ForeignKey(
+    owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE)
     serial_number = models.CharField(max_length=250, blank=True)
@@ -166,7 +166,7 @@ class MobileDevice(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["user", "serial_number"],
+            models.UniqueConstraint(fields=["owner", "serial_number", "imei"],
                                     name="unique mobile device")
                        ]
 
@@ -545,3 +545,36 @@ class RfcTest(models.Model):
 
     def __str__(self):
         return "%s<%s>" % (self.date_created, self.location.barangay)
+
+
+class RfcDeviceUser(models.Model):
+    device = models.ForeignKey(RfcDevice, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    assigned_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=[
+                "device", "user"
+            ], name="One RFC device instance per user")
+        ]
+
+
+class MobileDeviceUser(models.Model):
+    device = models.ForeignKey(MobileDevice, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    assigned_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=[
+                "device", "user"
+            ], name="One Mobile device instance per user")
+        ]
+
+
+class ActivatedMobDevice(models.Model):
+    device = models.OneToOneField(
+        MobileDevice,
+        on_delete=models.CASCADE
+    )

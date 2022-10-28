@@ -30,14 +30,18 @@ from mobile.serializers import (
     NtcMobileResultsSerializer,
     MobileDeviceSerializer,
     MobileResultsListSerializer,
-    ListMobileSerializer
+    ListMobileSerializer,
+    MobileDeviceUsersSerializer,
+    ActivateMobileDeviceSerializer,
 )
 
 from core.models import (
     MobileResult,
     MobileDevice,
     PublicSpeedTest,
-    NTCSpeedTest
+    NTCSpeedTest,
+    MobileDeviceUser,
+    ActivatedMobDevice
 )
 from . import permissions as custom_permission
 
@@ -186,13 +190,13 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
                 email=self.request.user
             )
             return MobileDevice.objects.filter(
-                user__nro=staff.nro
+                owner__nro=staff.nro
             )
 
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    user_id=int(self.kwargs['pk']),
+                    owner_id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
@@ -204,21 +208,20 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         """Reg Client and User(owner)"""
         # Create a client from mobile device name
         device_imei = self.request.data['imei']
-        user = get_user_model().objects.get(id=int(self.request.data['user']))
+        user = get_user_model().objects.get(id=int(self.request.data['owner']))
         client = Client.objects.create(name=device_imei)
         AuthToken.objects.create(user=user, client=client)
         serializer.save(client=client)
 
 
 class ListUserMobileDevices(generics.ListAPIView):
-    serializer_class = MobileDeviceSerializer
+    serializer_class = MobileDeviceUsersSerializer
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
         user = self.request.user
-        print(user)
-        return MobileDevice.objects.filter(user=user)
+        return MobileDeviceUser.objects.filter(user__email=user)
 
 
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
@@ -380,3 +383,15 @@ class MobileResultCSV(APIView):
                     }
                    for response in response]
         return Response(content)
+
+
+class ActivateMobileDeviceView(generics.CreateAPIView):
+    """View for activating mobile device"""
+
+    serializer_class = ActivateMobileDeviceSerializer
+    queryset = ActivatedMobDevice.objects.all()
+    permission_classes = (permissions.IsAdminUser,)
+    authentication_classes = (TokenAuthentication,)
+
+
+

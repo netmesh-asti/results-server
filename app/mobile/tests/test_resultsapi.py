@@ -96,7 +96,7 @@ class PrivateAndroidApiTests(TestCase):
             "ram": "8",
             "storage": "10000",
             "client": self.test_client,
-            "user": self.user,
+            "owner": self.user,
         }
         MobileDevice.objects.create(**device_details)
 
@@ -186,7 +186,7 @@ class PrivateAndroidApiTests(TestCase):
             "android_version": "8",
             "ram": "8",
             "storage": "10000",
-            "user": self.user2.id,
+            "owner": self.user2.id,
         }
         self.client.force_authenticate(user=self.admin)
         res = self.client.post(DEVICE_CREATE_URL, device_details)
@@ -207,7 +207,7 @@ class PrivateAndroidApiTests(TestCase):
             "android_version": "8",
             "ram": "8",
             "storage": "10000",
-            "user": self.user2.id,
+            "owner": self.user2.id,
         }
         res = self.client.post(DEVICE_CREATE_URL, device_details)
         res = self.client.get(reverse("mobile:mobile-device-detail",

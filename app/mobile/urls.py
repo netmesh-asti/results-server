@@ -53,7 +53,7 @@ urlpatterns = [
          views.MobileResultCSV.as_view(),
          name='mobileresultcsv'
          ),
-    # path('android/list', views.ListAndroidResView.as_view(), name='list')
+    path('manage/activate', views.ActivateMobileDeviceView.as_view(), name='activate-mobile')
 ]
 
 urlpatterns += router.urls
