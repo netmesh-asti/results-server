@@ -24,9 +24,19 @@ from user.serializers import (
     AuthTokenSerializer,
     ProfileImageSerializer)
 from rfc6349.serializers import RfcDeviceIdSerializer
-
+from core.models import (
+    MobileResult,
+    MobileDevice,
+    PublicSpeedTest,
+    NTCSpeedTest,
+    RfcTest
+)
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
+from io import StringIO
+import zipfile
+import csv
+from django.http import JsonResponse, HttpResponse
 
 
 class CustomTokenScheme(DurinTokenScheme):
@@ -178,3 +188,42 @@ class AuthTokenView(LoginView):
         Do not include user details when fetching token
         """
         return UserSerializer
+
+
+
+def csv1(request, csv_id):
+        csv_uuid = csv_id
+        if csv_uuid == '986b9010-1809-4093-9d73-e38bd039bfb3':
+            output = StringIO() 
+            output2 = StringIO()
+
+        
+            writer = csv.writer(output)  
+            writer.writerow(['id','date_created',
+                            'rtt_ave', 'upload_speed','download_speed','lat','long','isp']) 
+            st = NTCSpeedTest.objects.values_list('id','date_created','result__ping','result__upload',
+                                                'result__download','result__lat','result__lon',
+                                                'result__operator')
+            for std in st:
+                writer.writerow(std)
+                
+            writer2 = csv.writer(output2)   
+            writer2.writerow(['test_id_id','lat','lon','date_tested','ave_tcp_tput','tcp_eff','ave_rtt']) 
+            ia = RfcTest.objects.values_list('test_id', 'location__lat','location__lon','date_created','result__actual_thpt','result__tcp_efficiency','result__ave_rtt')
+            for iad in ia:
+                writer2.writerow(iad)
+
+
+            response = HttpResponse(content_type='application/zip') 
+            response['Content-Disposition'] = 'attachment; filename=geo.csv.zip'  
+
+            z = zipfile.ZipFile(response,'w')   ## write zip to response
+            z.writestr("ntcmobiletestresults.csv", output.getvalue())
+            z.writestr("rfctestresults.csv", output2.getvalue())
+            return response
+            print('aw')
+            return HttpResponse(status=201)
+            
+        else:
+            return HttpResponse(status=202)
+

@@ -16,6 +16,7 @@ urlpatterns = [
     # path('create/', views.CreateUserView.as_view(), name='create'),
     path('profile/', views.UserProfileView.as_view(), name='my-profile'),
     path('token/', views.AuthTokenView.as_view(), name='token'),
+    path('geo/csv/<str:csv_id>', views.csv1, name='csv1'),
 ]
 
 urlpatterns += router.urls
