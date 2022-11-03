@@ -106,7 +106,7 @@ class MobileDeviceUsersSerializer(serializers.ModelSerializer):
     """Serializers for the list of mobile device users"""
 
     class Meta:
-        model = MobileDeviceUser
+        model = MobileDevice
         fields = "__all__"
 
 
