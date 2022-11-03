@@ -167,11 +167,13 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 #         lookup_field = self.kwargs["test_id"]
 #         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
+
 class ManageMobileDeviceView(viewsets.ModelViewSet):
     """Manage Enrollment of Mobile Devices for Staffs"""
     serializer_class = MobileDeviceSerializer
     permission_classes = (permissions.IsAdminUser,)
     authentication_classes = (TokenAuthentication, )
+
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -179,6 +181,8 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         elif self.action == "list":
             return ListMobileSerializer
         elif self.action == "retrieve":
+            return MobileDeviceSerializer
+        elif self.action == "update":
             return MobileDeviceSerializer
 
     def get_queryset(self):
@@ -195,13 +199,28 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    owner_id=int(self.kwargs['pk']),
+                    id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = MobileDevice.objects.get(id=int(self.kwargs['pk']))
+            print(instance)
+        except MobileDevice.DoesNotExist:
+            raise APIException("No device was found.")
+
+        serializer = self.get_serializer(instance=instance,
+                                            data=request.data, 
+                                            partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
 
     def perform_create(self, serializer):
         """Reg Client and User(owner)"""
@@ -213,14 +232,15 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         serializer.save(client=client)
 
 
+
 class ListUserMobileDevices(generics.ListAPIView):
-    serializer_class = MobileDeviceUsersSerializer
+    serializer_class = MobileDeviceSerializer
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
         user = self.request.user
-        return MobileDeviceUser.objects.filter(user__email=user)
+        return MobileDevice.objects.filter(owner=user)
 
 
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
@@ -229,9 +249,10 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
 
     def get_object(self):
-        lookup_field = self.kwargs["serial_number"]
-        return get_object_or_404(MobileDevice, serial_number=lookup_field)
+        lookup_field = self.kwargs["id"]
+        return get_object_or_404(MobileDevice, id=lookup_field)
 
+search_csv = ''
 
 @extend_schema_view(
     get=extend_schema(description='Mobile Datatable (Ignore)',
@@ -305,7 +326,7 @@ class MyUserRenderer (r.CSVRenderer):
               'ntc_region', 'td_android_version',
               'td_imei', 'td_phone_model', 'download', 'upload', 'ping',
               'jitter', 'mcc', 'mnc', 'tac', 'network_type', 'operator',
-              'rssi', 'signal_quality',  'ssid', 'bssid', 'province',
+              'rssi', 'signal_quality',  'ssid', 'bssid', 'lat', 'lon', 'province',
               'municipality', 'barangay']
 
 
@@ -315,7 +336,7 @@ class MobileResultCSV(APIView):
     header = ['date_created', 'test_id', 'tester_email']
 
     def get(self, request):
-        global search_csv, column_order, dir_order, starttable, lengthtable
+        global search_csv
         isp = request.query_params.get('isp')
         province = request.query_params.get('province')
         municipality = request.query_params.get('municipality')
@@ -324,10 +345,10 @@ class MobileResultCSV(APIView):
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
         response = NTCSpeedTest.objects.filter(tester__nro__region=region).order_by('-date_created')
-        if column_order == '0':
-            column_order = "date_created"
-        if dir_order == 'asc':
-            column_order = '-' + column_order
+        # if column_order == '0':
+        #     column_order = "date_created"
+        # if dir_order == 'asc':
+        #     column_order = '-' + column_order
 
         if isp:
             response = response.filter(Q(result__operator__icontains=isp))
@@ -352,7 +373,7 @@ class MobileResultCSV(APIView):
         if search_csv:
             response = response.filter(Q(test_id__icontains=search_csv))
 
-        response = response.order_by(column_order)[starttable:starttable+lengthtable]
+        # response = response.order_by(column_order)[starttable:starttable+lengthtable]
 
         content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
                     'test_id': response.test_id,
@@ -376,6 +397,8 @@ class MobileResultCSV(APIView):
                     'signal_quality': response.result.signal_quality,
                     'ssid': response.result.ssid,
                     'bssid': response.result.bssid,
+                    'lat': response.location.lat,
+                    'lon': response.location.lon,
                     'province': response.location.province,
                     'municipality': response.location.municipality,
                     'barangay': response.location.barangay,
