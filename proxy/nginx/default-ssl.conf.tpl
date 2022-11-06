@@ -28,13 +28,49 @@ server {
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     include /etc/nginx/mime.types;
 
-    location /static {
-        alias /vol/static/portal_statics/static;
+    location /static/css/ {
+        alias /vol/static/portal_statics/css/;
     }
 
-    location /gis/staticfiles {
-	alias /vol/static/staticfiles/staticfiles;
-    } 
+    location /static/js/ {
+        alias /vol/static/portal_statics/js/;
+    }
+
+    location /static/static/ {
+        alias /vol/static/portal_statics/static/;
+    }
+
+    location /static/media/ {
+        alias /vol/static/portal_statics/media/;
+    }
+
+    location /static/build/ {
+        alias /vol/static/portal_statics/build/;
+    }
+
+    location /static/proxy/ {
+        alias /vol/static/portal_statics/proxy/;
+    }
+
+    location /static/www/ {
+        alias /vol/static/portal_statics/www/;
+    }
+
+    location /static/geo {
+       alias /vol/static/darius_statics/static/geo;
+    }
+    location /static/geo/results {
+       alias /vol/static/darius_statics/static/geo/results;
+    }
+    location /static/css {
+       alias /vol/static/darius_statics/static/css;
+    }
+    location /static/js {
+       alias /vol/static/darius_statics/static/js;
+    }
+    location /static/scripts {
+       alias /vol/static/darius_statics/static/scripts;
+     }
 
     location /portal/static {
         alias /vol/static;

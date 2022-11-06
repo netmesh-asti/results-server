@@ -16,6 +16,7 @@ services:
       - ALLOWED_HOSTS=${DOMAIN}
       - GMAPS_TOKEN=${GMAPS_TOKEN}
       - DOMAIN=${DOMAIN}
+      - DEBUG=0
     depends_on:
       - netmeshdb
 
@@ -43,9 +44,9 @@ services:
       - proxy-dhparams:/vol/proxy
       - certbot-certs:/etc/letsencrypt
       - static-data:/vol/static
-      - ./portal/build:/vol/static/portal_statics
-      - darius-static:/vol/static/staticfiles
+      - ./portal/build/static:/vol/static/portal_statics
       - ./portal/build:/etc/nginx/html
+      - ./portal/darius:/vol/static/darius_statics
         #- ./portal/build/static:/var/static
     environment:
       - DOMAIN=${DOMAIN}
