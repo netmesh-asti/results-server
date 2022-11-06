@@ -40,7 +40,7 @@ urlpatterns = [
          views.ListUserMobileDevices.as_view(),
          name='mobiledevicelist'
          ),
-    path('ft/device/<serial_number>',
+    path('ft/device/<id>',
          views.RetrieveUserMobileDeviceDetail.as_view(),
          name='mobiledevicedetail'
          ),

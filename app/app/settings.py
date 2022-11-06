@@ -54,15 +54,14 @@ if DEBUG:
     INSTALLED_APPS.insert(0, 'django_extensions')
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -140,6 +139,8 @@ STATIC_ROOT = '/vol/web/static'
 
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'core.User'
@@ -170,4 +171,4 @@ REST_DURIN = {
     "API_ACCESS_RESPONSE_INCLUDE_TOKEN": True,
 }
 
-CORS_ALLOW_ALL_ORIGINS = True
+

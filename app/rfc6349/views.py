@@ -218,7 +218,7 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
     FT can only retrieve his/her tests
     FT can't change/delete his/her tests
     """
-    lookup_field = "serial_number"
+    lookup_field = "id"
     serializer_class = RfcDeviceSerializer
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (TokenAuthentication, )
@@ -228,9 +228,9 @@ class UserRFC6349DeviceView(viewsets.ReadOnlyModelViewSet):
             owner=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
-        lookup_field = self.kwargs["serial_number"]
+        lookup_field = self.kwargs["id"]
         print(lookup_field)
-        device = get_object_or_404(RfcDevice, serial_number=lookup_field)
+        device = get_object_or_404(RfcDevice, id=lookup_field)
         serializer = RfcDeviceSerializer(device)
         return Response(serializer.data)
 
@@ -304,7 +304,7 @@ def RFC6349ResultsList(request):
 
 
 class MyUserRenderer (r.CSVRenderer):
-    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name', 'ntc_region', 'province', 'municipality',
+    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name', 'ntc_region', 'lat', 'lon', 'province', 'municipality',
               'barangay', 'mtu', 'rtt', 'bb', 'bdp', 'rwnd', 'actual_thpt', 'max_achievable_thpt', 'tx_bytes', 'ave_rtt',
               'rwnd', 'retransmit_bytes', 'ideal_transfer_time', 'transfer_time_ratio', 'tcp_efficiency', 'buffer_delay']
 
@@ -357,6 +357,8 @@ class RFC6349ResultCSV(APIView):
                     'tester_first_name': response.tester.first_name,
                     'tester_last_name': response.tester.last_name,
                     'ntc_region': response.tester.nro.region,
+                    'lat': response.location.lat,
+                    'lon': response.location.lon,
                     'province': response.location.province,
                     'municipality': response.location.municipality,
                     'barangay': response.location.barangay,
