@@ -76,7 +76,7 @@ class UserManager(BaseUserManager):
         """
         Create and save a SuperUser with the given email and password.
         """
-        superuser_office = NtcRegionalOffice.objects.get(id=nro)
+        superuser_office = NtcRegionalOffice.objects.get(id=nro.id)
         user = self.create_user(
             email,
             superuser_office,
@@ -123,7 +123,7 @@ class RfcDevice(models.Model):
     """
     client = models.OneToOneField(Client, on_delete=models.CASCADE)
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE)
     name = models.CharField(max_length=250, null=False)
     manufacturer = models.CharField(max_length=250, blank=True)
