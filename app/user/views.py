@@ -22,7 +22,8 @@ from user.serializers import (
     UserSerializer,
     UserProfileSerializer,
     AuthTokenSerializer,
-    ProfileImageSerializer)
+    ProfileImageSerializer,
+    UserActiveSerializer)
 from rfc6349.serializers import RfcDeviceIdSerializer
 from core.models import (
     MobileResult,
@@ -102,6 +103,8 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             return ProfileImageSerializer
         elif self.action == "assign_rfc_device":
             return RfcDeviceIdSerializer
+        elif self.action == "user-active":
+            return UserActiveSerializer
         return UserSerializer
 
     def perform_create(self, serializer):
@@ -112,13 +115,6 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         user = get_user_model().objects.get(email=self.request.data['email'])
         AuthToken.objects.create(client=c, user=user)
 
-    @extend_schema(
-        parameters=[
-        ],
-        request=UserSerializer,
-        responses=UserSerializer,
-        # more customizations
-    )
     @action(methods=['POST'], detail=False, url_path='upload-image')
     def upload_image(self, request, pk=None):
         """Upload an image to user."""
@@ -150,6 +146,44 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         client = Client.objects.get(name=request.data['name'])
         AuthToken.objects.get(user=user, client=client).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['POST', ], detail=True, url_path='assign-mobile-device')
+    def assign_mobile_device(self, request, pk=None):
+        """Assign RFC Device to User"""
+        user = get_object_or_404(get_user_model(), id=pk)
+        client = Client.objects.get(name=request.data['name'])
+        AuthToken.objects.create(user=user, client=client)
+        return response.Response(status=status.HTTP_200_OK)
+
+    @action(methods=['DELETE', ], detail=True, url_path='remove-mobile-device')
+    def remove_mobile_device(self, request, pk=None):
+        """Remove RFC Device From User"""
+        user = get_object_or_404(get_user_model(), id=pk)
+        client = Client.objects.get(name=request.data['name'])
+        AuthToken.objects.get(user=user, client=client).delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        parameters=[
+        ],
+        request=UserActiveSerializer,
+        responses=UserActiveSerializer,
+    )
+    @action(methods=['POST', ], detail=True, url_path='user-active')
+    def user_active(self, request, pk=None):
+        """Activate/Deactivate a User"""
+        user = self.get_object()
+        serializer = self.get_serializer(user=user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            AuthToken.objects.get(user=user).delete()
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_200_OK)
+
+        return response.Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthTokenView(LoginView):
@@ -190,32 +224,31 @@ class AuthTokenView(LoginView):
         return UserSerializer
 
 
-
 def csv1(request, csv_id):
         csv_uuid = csv_id
         if csv_uuid == '986b9010-1809-4093-9d73-e38bd039bfb3':
-            output = StringIO() 
+            output = StringIO()
             output2 = StringIO()
 
-        
-            writer = csv.writer(output)  
+
+            writer = csv.writer(output)
             writer.writerow(['id','date_created',
-                            'rtt_ave', 'upload_speed','download_speed','lat','long','isp']) 
+                            'rtt_ave', 'upload_speed','download_speed','lat','long','isp'])
             st = NTCSpeedTest.objects.values_list('id','date_created','result__ping','result__upload',
                                                 'result__download','result__lat','result__lon',
                                                 'result__operator')
             for std in st:
                 writer.writerow(std)
-                
-            writer2 = csv.writer(output2)   
-            writer2.writerow(['test_id_id','lat','lon','date_tested','ave_tcp_tput','tcp_eff','ave_rtt']) 
+
+            writer2 = csv.writer(output2)
+            writer2.writerow(['test_id_id','lat','lon','date_tested','ave_tcp_tput','tcp_eff','ave_rtt'])
             ia = RfcTest.objects.values_list('test_id', 'location__lat','location__lon','date_created','result__actual_thpt','result__tcp_efficiency','result__ave_rtt')
             for iad in ia:
                 writer2.writerow(iad)
 
 
-            response = HttpResponse(content_type='application/zip') 
-            response['Content-Disposition'] = 'attachment; filename=geo.csv.zip'  
+            response = HttpResponse(content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename=geo.csv.zip'
 
             z = zipfile.ZipFile(response,'w')   ## write zip to response
             z.writestr("ntcmobiletestresults.csv", output.getvalue())
@@ -223,7 +256,7 @@ def csv1(request, csv_id):
             return response
             print('aw')
             return HttpResponse(status=201)
-            
+
         else:
             return HttpResponse(status=202)
 
