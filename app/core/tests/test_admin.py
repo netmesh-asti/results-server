@@ -1,45 +1,42 @@
-from django.test import TestCase, Client
+import pytest
+
+from rest_framework.test import APIClient
+
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from core import models
+from pytest_drf import AsUser, UsesGetMethod, Returns200, APIViewTest
+from pytest_lambda import lambda_fixture
+
+pytestmark = pytest.mark.django_db
 
 
-class AdminSiteTests(TestCase):
+@pytest.fixture
+def admin(user_info):
+    user_info['email'] = "admin@example.com"
+    admin = get_user_model().objects.create_superuser(
+        **user_info
+    )
+    return admin
 
-    def setUp(self):
-        self.nro_info = {
-            "address": "test address",
-            "region": "1",
-        }
-        self.nro = models.NtcRegionalOffice.objects.create(**self.nro_info)
-        self.client = Client()
-        email = 'admin@gmail.com'
-        password = 'password123'
-        first_name = 'NTC'
-        last_name = 'Netmesh'
 
-        self.admin_user = get_user_model().objects.create_superuser(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            nro=self.nro.id
-        )
+class TestAdminSiteListUsers(
+    APIViewTest,
+    UsesGetMethod,
+    Returns200,
+    AsUser("admin")
+):
+    url = lambda_fixture(lambda: reverse('admin:core_user_changelist'))
 
-        self.client.force_login(self.admin_user)
-        self.user = get_user_model().objects.create_user(
-            email='tester@gmail.com',
-            password='password123',
-            first_name='Test', last_name='User',
-            nro=self.nro
-        )
+    @pytest.fixture
+    def client(self, unauthed_client, admin):
+        client = APIClient()
+        client.force_login(user=admin)
+        return client
 
-    def test_users_listed(self):
+    def test_user_listed(self, response, user_info):
         """Test that users are listed on user page"""
-        url = reverse('admin:core_user_changelist')
-        res = self.client.get(url)
+        first_name = user_info['first_name']
+        outcome = response.render().content.decode()
+        assert first_name in outcome
 
-        self.assertContains(res, self.user.first_name)
-        self.assertContains(res, self.user.last_name)
-        self.assertContains(res, self.user.email)
