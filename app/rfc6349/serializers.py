@@ -3,7 +3,8 @@ from rest_framework import serializers
 from core.models import (
     RfcResult,
     RfcDevice,
-    RfcTest
+    RfcTest,
+    RfcDeviceUser
 )
 from user.serializers import UserSerializer
 from location.serializers import LocationSerializer
@@ -61,3 +62,11 @@ class RfcDeviceIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = RfcDevice
         fields = ('name', )
+
+
+class RfcUserDevicesSerializer(serializers.Serializer):
+    """Serializer for RFC device lists"""
+
+    class Meta:
+        model = RfcDeviceUser
+        fields = "__all__"

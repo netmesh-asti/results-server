@@ -1,3 +1,8 @@
+from datetime import date
+import datetime
+
+from django.utils.dateparse import parse_date
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -8,6 +13,11 @@ from rest_framework import (
     status,
 )
 from rest_framework.exceptions import APIException, NotFound
+from rest_framework_csv import renderers as r
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
 
 from durin.models import AuthToken, Client
 from durin.auth import TokenAuthentication
@@ -33,16 +43,16 @@ from rfc6349.serializers import (
     RfcDeviceNameSerializer,
 )
 
-from django.utils.dateparse import parse_date
-from datetime import date
-import datetime
-from core import utils
-from django.db.models import Q
-from rest_framework_csv import renderers as r
-from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.response import Response
+from core.utils import Gis
+
+
+class ResultLocation(Gis):
+
+    def __init__(self, lat, lon):
+        super(ResultLocation, self).__init__(lat, lon)
+
+    def reverse_geo(self):
+        return self.get_location()
 
 
 class Rfc6349ResView(generics.ListCreateAPIView):
@@ -70,7 +80,8 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         lon = float(self.request.data.get('lon'))
         if lat is None or lon is None:
             raise APIException("lat and lon are require")
-        loc = utils.get_location(lat, lon)
+        gis = ResultLocation(lat, lon)
+        loc = gis.reverse_geo()
         loc = Location.objects.create(**loc)
         ip = get_client_ip(self.request)
         RfcTest.objects.create(
