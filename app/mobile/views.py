@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from core.utils import get_client_ip
+from core.utils import Gis, get_client_ip
 
 from mobile.serializers import (
     MobileResultsSerializer,
@@ -44,6 +44,9 @@ from core.models import (
     ActivatedMobDevice
 )
 from . import permissions as custom_permission
+
+
+get_location = Gis.get_location
 
 
 class MobileResultsView(generics.CreateAPIView):
@@ -76,7 +79,7 @@ class MobileResultsView(generics.CreateAPIView):
             lon = float(self.request.data.get('lon'))
             if lat is None or lon is None:
                 raise APIException("lat and lon are require")
-            loc = utils.get_location(lat, lon)
+            loc = get_location(lat, lon)
             if loc is None:
                 raise APIException("No Location found!")
             loc = models.Location.objects.create(**loc)
@@ -103,7 +106,7 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = get_user_model().objects.get(email=self.request.user)
         return NTCSpeedTest.objects.filter(
-            tester__ntc_region=user.nro.region)
+            tester__nro__region=user.nro.region)
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
@@ -170,7 +173,7 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 
 class ManageMobileDeviceView(viewsets.ModelViewSet):
     """Manage Enrollment of Mobile Devices for Staffs"""
-    serializer_class = MobileDeviceSerializer
+    # serializer_class = MobileDeviceSerializer
     permission_classes = (permissions.IsAdminUser,)
     authentication_classes = (TokenAuthentication, )
 
@@ -199,7 +202,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    id=int(self.kwargs['pk']),
+                    owner_id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
             raise APIException("No device was found.")
@@ -215,7 +218,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             raise APIException("No device was found.")
 
         serializer = self.get_serializer(instance=instance,
-                                            data=request.data, 
+                                            data=request.data,
                                             partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -232,15 +235,14 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         serializer.save(client=client)
 
 
-
 class ListUserMobileDevices(generics.ListAPIView):
-    serializer_class = MobileDeviceSerializer
+    serializer_class = MobileDeviceUsersSerializer
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
         user = self.request.user
-        return MobileDevice.objects.filter(owner=user)
+        return MobileDeviceUser.objects.filter(user__email=user)
 
 
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
@@ -249,8 +251,8 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
 
     def get_object(self):
-        lookup_field = self.kwargs["id"]
-        return get_object_or_404(MobileDevice, id=lookup_field)
+        lookup_field = self.kwargs["serial_number"]
+        return get_object_or_404(MobileDevice, serial_number=lookup_field)
 
 search_csv = ''
 
