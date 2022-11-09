@@ -12,7 +12,7 @@ from rest_framework import (
     viewsets,
     status,
 )
-from rest_framework.exceptions import APIException, NotFound
+from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework_csv import renderers as r
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -79,7 +79,7 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         lat = float(self.request.data.get('lat'))
         lon = float(self.request.data.get('lon'))
         if lat is None or lon is None:
-            raise APIException("lat and lon are require")
+            raise ValidationError("lat and lon are require")
         gis = ResultLocation(lat, lon)
         loc = gis.reverse_geo()
         loc = Location.objects.create(**loc)
@@ -111,7 +111,7 @@ class RfcDeviceView(viewsets.ModelViewSet):
                     client__name=name
                 )
                 if device_query.exists():
-                    raise APIException("The client name is already taken. ")
+                    raise ValidationError("The client name is already taken. ")
             email = self.request.user
             admin = get_user_model().objects.get(email=email)
             device_query = RfcDevice.objects.filter(
@@ -161,7 +161,7 @@ class RfcDeviceView(viewsets.ModelViewSet):
         device_user = self.request.data['owner']
         user = get_user_model().objects.get(id=device_user)
         if Client.objects.filter(name=name).exists():
-            raise APIException("The name already exists.")
+            raise ValidationError("The name already exists.")
         client = Client.objects.create(name=name)
         AuthToken.objects.create(client=client, user=user)
         serializer.save(client=client, owner=user)
