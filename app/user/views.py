@@ -117,7 +117,7 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             return RfcDeviceUserSerializer
         elif self.action == "assign_mobile_device":
             return MobileDeviceUserSerializer
-        elif self.action == "user-active":
+        elif self.action == "user_active":
             return UserActiveSerializer
         return UserSerializer
 
