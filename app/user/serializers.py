@@ -102,7 +102,7 @@ class ProfileImageSerializer(serializers.ModelSerializer):
 
 
 class UserActiveSerializer(serializers.ModelSerializer):
-    """Serializer for uploading profile pictures to Users."""
+    """Serializer for changing DB active status of Users."""
 
     class Meta:
         model = get_user_model()

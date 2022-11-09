@@ -12,11 +12,13 @@ from pytest_drf import (
     ViewSetTest,
     UsesListEndpoint,
     UsesPostMethod,
+    UsesPatchMethod,
     Returns200,
     Returns201,
     AsUser
 )
-from pytest_lambda import lambda_fixture
+from pytest_lambda import lambda_fixture, static_fixture
+from pytest_drf.util import url_for
 from pytest_assert_utils import assert_model_attrs
 
 from app.settings import TEST_CLIENT_NAME
@@ -154,37 +156,71 @@ class TestAssignRfcDeviceToUser(
 class TestAssignMobileDeviceToUser(
     ViewSetTest
 ):
-        @pytest.fixture
-        def data(self, user, mobile_device_details, durin_client):
-            device = MobileDevice.objects.create(
-                **mobile_device_details
-            )
+    @pytest.fixture
+    def data(self, user, mobile_device_details, durin_client):
+        device = MobileDevice.objects.create(
+            **mobile_device_details
+        )
 
-            return {
-                "user": user.id,
-                "device": device.id,
-            }
+        return {
+            "user": user.id,
+            "device": device.id,
+        }
 
-        @pytest.fixture
-        def client(self, unauthed_client, admin, admin_token):
-            client = APIClient()
-            client.credentials(**{
-                "Authorization": "Token {}".format(admin_token)
-            })
-            client.force_authenticate(user=admin)
-            return client
+    @pytest.fixture
+    def client(self, unauthed_client, admin, admin_token):
+        client = APIClient()
+        client.credentials(**{
+            "Authorization": "Token {}".format(admin_token)
+        })
+        client.force_authenticate(user=admin)
+        return client
 
-        class TestAssignMobileDevice(
-            UsesPostMethod,
-            Returns200,
-            AsUser('admin')
-        ):
-            url = lambda_fixture(lambda: reverse("user:ft-assign-mobile-device"))
+    class TestAssignMobileDevice(
+        UsesPostMethod,
+        Returns200,
+        AsUser('admin')
+    ):
+        url = lambda_fixture(lambda: reverse("user:ft-assign-mobile-device"))
 
-            def test_instance_created(self, user, json):
-                instance = MobileDeviceUser.objects.get(id=json['id'])
-                # print(instance.device, instance.user)
-                assert instance.user == user
+        def test_instance_created(self, user, json):
+            instance = MobileDeviceUser.objects.get(id=json['id'])
+            # print(instance.device, instance.user)
+            assert instance.user == user
+
+
+@pytest.mark.django_db
+class TestUserActiveInDB(
+    ViewSetTest
+):
+
+    @pytest.fixture
+    def client(self, unauthed_client, admin, admin_token, user_token, durin_client):
+        client = APIClient()
+        client.credentials(**{
+            "Authorization": "Token {}".format(admin_token)
+        })
+
+        client.force_authenticate(user=admin)
+        return client
+
+    data = static_fixture({
+        "is_active": False
+    })
+
+    class TestSetActive(
+        UsesPatchMethod,
+        Returns200,
+        # AsUser('admin')
+    ):
+        url = lambda_fixture(lambda user: url_for("user:ft-user-active", user.pk))
+
+        def test_user_db_active_set(self, json):
+            print(json)
+            user = get_user_model().objects.get(id=json['id'])
+            expected = False
+            outcome = user.is_active
+            assert expected == outcome
     # def test_retrieve_update_user_success(self):
     #     """test that admin can fetch field tester and update"""
     #     # only staffs are allowed to update
