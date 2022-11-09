@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import generics, permissions, viewsets, status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError, NotFound
 
 from rest_framework.response import Response
 
@@ -74,14 +74,14 @@ class MobileResultsView(generics.CreateAPIView):
             try:
                 obj = serializer.save()
             except IntegrityError:
-                raise APIException("Data already exists.")
+                raise ValidationError("Data already exists.")
             lat = float(self.request.data.get('lat'))
             lon = float(self.request.data.get('lon'))
             if lat is None or lon is None:
-                raise APIException("lat and lon are require")
+                raise ValidationError("lat and lon are require")
             loc = get_location(lat, lon)
             if loc is None:
-                raise APIException("No Location found!")
+                raise ValidationError("No Location found!")
             loc = models.Location.objects.create(**loc)
             ip = get_client_ip(self.request)
             NTCSpeedTest.objects.create(
@@ -114,7 +114,7 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
             instance = NTCSpeedTest.objects.get(
                     tester_id=int(self.kwargs['pk']))
         except NTCSpeedTest.DoesNotExist:
-            raise APIException("No test was found.")
+            raise NotFound("No test was found.")
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
@@ -148,7 +148,7 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
             instance = NTCSpeedTest.objects.get(
                     test_id=lookup_field)
         except NTCSpeedTest.DoesNotExist:
-            raise APIException("No result was found.")
+            raise NotFound("No result was found.")
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -205,7 +205,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
                     owner_id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
-            raise APIException("No device was found.")
+            raise NotFound("No device was found.")
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -215,7 +215,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             instance = MobileDevice.objects.get(id=int(self.kwargs['pk']))
             print(instance)
         except MobileDevice.DoesNotExist:
-            raise APIException("No device was found.")
+            raise NotFound("No device was found.")
 
         serializer = self.get_serializer(instance=instance,
                                             data=request.data,
