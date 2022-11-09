@@ -157,8 +157,8 @@ class MobileDevice(models.Model):
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE)
-    serial_number = models.CharField(max_length=250, blank=True)
-    imei = models.CharField(max_length=250, blank=True)
+    serial_number = models.CharField(max_length=250, blank=True, unique=True)
+    imei = models.CharField(max_length=250, blank=True, unique=True)
     phone_model = models.CharField(max_length=250, blank=True)
     android_version = models.CharField(max_length=100, blank=True)
     ram = models.CharField(max_length=250, blank=True)
