@@ -224,7 +224,6 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
-
     def perform_create(self, serializer):
         """Reg Client and User(owner)"""
         # Create a client from mobile device name

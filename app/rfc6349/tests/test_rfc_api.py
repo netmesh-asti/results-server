@@ -23,11 +23,6 @@ from core import models
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def user(user):
-    return user
-
-
 class TestUserCreateResultAPI(
     APIViewTest,
     UsesPostMethod,

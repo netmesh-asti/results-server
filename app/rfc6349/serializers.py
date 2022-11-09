@@ -1,5 +1,9 @@
 from rest_framework import serializers
 
+from durin.models import (
+    Client,
+    AuthToken
+)
 from core.models import (
     RfcResult,
     RfcDevice,
@@ -64,9 +68,18 @@ class RfcDeviceIdSerializer(serializers.ModelSerializer):
         fields = ('name', )
 
 
-class RfcUserDevicesSerializer(serializers.Serializer):
+class RfcDeviceUserSerializer(serializers.ModelSerializer):
     """Serializer for RFC device lists"""
 
     class Meta:
         model = RfcDeviceUser
-        fields = "__all__"
+        fields = ("id", "user", "device")
+        read_only_fields = ('id',)
+
+    def create(self, validated_data):
+        instance = RfcDeviceUser.objects.create(**validated_data)
+        rfc_device_instance = RfcDeviceUser.objects.get(id=instance.id)
+        device_name = rfc_device_instance.device.name
+        client = Client.objects.get(name=device_name)
+        AuthToken.objects.create(user=rfc_device_instance.user, client=client)
+        return instance

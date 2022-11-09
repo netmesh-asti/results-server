@@ -176,7 +176,7 @@ def rfc_result(server):
 
 @pytest.mark.django_db
 @pytest.fixture
-def mobile_device_details(durin_client, user):
+def mobile_device_details(mobile_client, user):
     return {
         "serial_number": "123456",
         "imei": "43432423432",
@@ -184,16 +184,16 @@ def mobile_device_details(durin_client, user):
         "android_version": "8",
         "ram": "8",
         "storage": "10000",
-        "client": durin_client,
+        "client": mobile_client,
         "owner": user
     }
 
 
 @pytest.fixture
-def rfc_device_details(user,durin_client ):
+def rfc_device_details(user, durin_client ):
     return {
         "serial_number": "123456",
-        "name": "TestDevice",
+        "name": durin_client.name,
         "manufacturer": "ACER",
         "product": "Samsung S22",
         "version": "1",
@@ -226,6 +226,12 @@ def api_rfc_device_details(user, durin_client ):
 @pytest.fixture
 def durin_client():
     return Client.objects.create(name="TestClient0")
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def mobile_client():
+    return Client.objects.create(name="43432423432")
 
 
 @pytest.mark.django_db

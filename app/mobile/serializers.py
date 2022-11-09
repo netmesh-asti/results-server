@@ -10,6 +10,11 @@ from core.models import (
     ActivatedMobDevice,
 )
 
+from durin.models import (
+    Client,
+    AuthToken,
+)
+
 from location.serializers import LocationSerializer
 from user.serializers import UserSerializer 
 
@@ -108,6 +113,22 @@ class MobileDeviceUsersSerializer(serializers.ModelSerializer):
     class Meta:
         model = MobileDevice
         fields = "__all__"
+
+
+class MobileDeviceUserSerializer(serializers.ModelSerializer):
+    """Serializer for assigning mobile device to user"""
+    class Meta:
+        model = MobileDeviceUser
+        fields = ('id', 'user', 'device')
+        read_only_fields = ('id',)
+
+    def create(self, validated_data):
+        instance = MobileDeviceUser.objects.create(**validated_data)
+        mobile_device_instance = MobileDeviceUser.objects.get(id=instance.id)
+        device_name = mobile_device_instance.device.imei
+        client = Client.objects.get(name=device_name)
+        AuthToken.objects.create(user=mobile_device_instance.user, client=client)
+        return instance
 
 
 class MobileDeviceImeiSerializer(serializers.ModelSerializer):

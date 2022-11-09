@@ -23,12 +23,20 @@ from user.serializers import (
     UserProfileSerializer,
     AuthTokenSerializer,
     ProfileImageSerializer,
-    UserActiveSerializer)
-from rfc6349.serializers import RfcDeviceIdSerializer
+    UserActiveSerializer
+)
+from rfc6349.serializers import (
+    RfcDeviceIdSerializer,
+    RfcDeviceUserSerializer
+)
+from mobile.serializers import (
+    MobileDeviceUserSerializer
+)
 from core.models import (
     MobileResult,
     MobileDevice,
     PublicSpeedTest,
+    RfcDeviceUser,
     NTCSpeedTest,
     RfcTest
 )
@@ -81,16 +89,19 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
     Manage field users' account
     Create, Update, Partial_Update and Delete
     """
-    queryset = get_user_model().objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.IsAdminUser,)
 
     def get_queryset(self):
         if self.action == "list":
             return get_user_model().objects.filter(
-                nro=self.request.user.nro)
+                nro=self.request.user.nro
+            )
         elif self.action == "create":
             return get_user_model().objects.all()
+        elif self.action == "assign_rfc_device":
+            return RfcDeviceUser.objects.all()
+
         return get_user_model().objects.filter(id=int(self.kwargs['pk']))
 
     def get_serializer_class(self):
@@ -102,7 +113,9 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         elif self.action == 'upload_image':
             return ProfileImageSerializer
         elif self.action == "assign_rfc_device":
-            return RfcDeviceIdSerializer
+            return RfcDeviceUserSerializer
+        elif self.action == "assign_mobile_device":
+            return MobileDeviceUserSerializer
         elif self.action == "user-active":
             return UserActiveSerializer
         return UserSerializer
@@ -123,6 +136,7 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
 
         if serializer.is_valid():
             serializer.save()
+
             return response.Response(
                 serializer.data,
                 status=status.HTTP_200_OK)
@@ -131,13 +145,19 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=['POST', ], detail=True, url_path='assign-rfc-device')
+    @action(methods=['POST', ], detail=False, url_path='assign-rfc-device')
     def assign_rfc_device(self, request, pk=None):
         """Assign RFC Device to User"""
-        user = get_object_or_404(get_user_model(), id=pk)
-        client = Client.objects.get(name=request.data['name'])
-        AuthToken.objects.create(user=user, client=client)
-        return response.Response(status=status.HTTP_200_OK)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_200_OK)
+
+        return response.Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['DELETE', ], detail=True, url_path='remove-rfc-device')
     def remove_rfc_device(self, request, pk=None):
@@ -147,13 +167,19 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         AuthToken.objects.get(user=user, client=client).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['POST', ], detail=True, url_path='assign-mobile-device')
+    @action(methods=['POST', ], detail=False, url_path='assign-mobile-device')
     def assign_mobile_device(self, request, pk=None):
-        """Assign RFC Device to User"""
-        user = get_object_or_404(get_user_model(), id=pk)
-        client = Client.objects.get(name=request.data['name'])
-        AuthToken.objects.create(user=user, client=client)
-        return response.Response(status=status.HTTP_200_OK)
+        """Assign Mobile Device to User"""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(
+                serializer.data,
+                status=status.HTTP_200_OK)
+
+        return response.Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['DELETE', ], detail=True, url_path='remove-mobile-device')
     def remove_mobile_device(self, request, pk=None):

@@ -9,7 +9,7 @@ app_name = 'user'
 router.register(
     r'manage',
     views.ManageFieldUsersView,
-    basename='user')
+    basename='ft')
 
 urlpatterns = [
     # path('', views.ListUsersView.as_view(), name='users'),
