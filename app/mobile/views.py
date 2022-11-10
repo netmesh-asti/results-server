@@ -46,9 +46,6 @@ from core.models import (
 from . import permissions as custom_permission
 
 
-get_location = Gis.get_location
-
-
 class MobileResultsView(generics.CreateAPIView):
     """View for Creating and Listing Mobile Speed Test Results"""
     queryset = MobileResult.objects.all()
@@ -78,8 +75,8 @@ class MobileResultsView(generics.CreateAPIView):
             lat = float(self.request.data.get('lat'))
             lon = float(self.request.data.get('lon'))
             if lat is None or lon is None:
-                raise ValidationError("lat and lon are require")
-            loc = get_location(lat, lon)
+                raise ValidationError("lat and lon are required.")
+            loc = Gis.find_location(lat, lon)
             if loc is None:
                 raise ValidationError("No Location found!")
             loc = models.Location.objects.create(**loc)

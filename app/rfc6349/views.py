@@ -79,9 +79,10 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         lat = float(self.request.data.get('lat'))
         lon = float(self.request.data.get('lon'))
         if lat is None or lon is None:
-            raise ValidationError("lat and lon are require")
-        gis = ResultLocation(lat, lon)
-        loc = gis.reverse_geo()
+            raise ValidationError("lat and lon are required.")
+        loc = Gis.find_location(lat, lon)
+        if loc is None:
+            raise ValidationError("No Location found!")
         loc = Location.objects.create(**loc)
         ip = get_client_ip(self.request)
         RfcTest.objects.create(

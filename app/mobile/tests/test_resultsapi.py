@@ -36,7 +36,7 @@ from core.models import (
     NtcRegionalOffice
 )
 
-from core.utils import Gis
+from mobile.views import Gis
 
 SPEEDTEST_LIST_CREATE_RESULT_URL = reverse("mobile:result")
 SPEEDTEST_LIST_RESULT_URL = reverse("mobile:speedtest-list")
@@ -64,7 +64,18 @@ class TestMobileResultAPI(
     url = lambda_fixture(lambda: reverse("mobile:result"))
 
     @pytest.fixture
-    def data(self, user_mobile_result):
+    def data(self, user_mobile_result, monkeypatch):
+        def mockreturn(*args, **kwargs):
+            return {
+                "lat": 15.1240083,
+                "lon": 120.6120233,
+                "region": "NCR",
+                "province": "Metro Manila",
+                "municipality": "Quezon City",
+                "barangay": "Krus Na Ligas"
+            }
+        # mock get_location to that we don't query the api everytime
+        monkeypatch.setattr(Gis, "find_location", mockreturn)
         return user_mobile_result
 
     @pytest.fixture
@@ -75,19 +86,8 @@ class TestMobileResultAPI(
         client.force_authenticate(user=user)
         return client
 
-    def test_user_create_result_success(self, json, user_mobile_result, monkeypatch):
+    def test_user_create_result_success(self, json, user_mobile_result):
         """Test user create results success"""
-        def mockreturn():
-            return {
-                "lat": 15.1240083,
-                "lon": 120.6120233,
-                "region": "NCR",
-                "province": "Metro Manila",
-                "municipality": "Quezon City",
-                "barangay": "Krus Na Ligas"
-            }
-        # mock get_location to that we don't query the api everytime
-        monkeypatch.setattr(Gis, "get_location", mockreturn)
         ph_offset = timedelta(hours=8)
         result_ts = user_mobile_result['timestamp']
         result_dt = datetime.strptime(result_ts, '%Y-%m-%d %H:%M:%S.%fZ')

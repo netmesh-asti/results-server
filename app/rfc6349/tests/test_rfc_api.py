@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from durin.models import AuthToken, Client
+from rfc6349.views import Gis
 
 from pytest_drf import(
     APIViewTest,
@@ -36,7 +37,18 @@ class TestUserCreateResultAPI(
     # mock get_location so that we don't query the api everytime
 
     @pytest.fixture
-    def data(self, rfc_result, mock_get_location):
+    def data(self, rfc_result, mock_get_location, monkeypatch):
+        def mockreturn(*args, **kwargs):
+            return {
+                "lat": 15.1240083,
+                "lon": 120.6120233,
+                "region": "NCR",
+                "province": "Metro Manila",
+                "municipality": "Quezon City",
+                "barangay": "Krus Na Ligas"
+            }
+        # mock get_location to that we don't query the api everytime
+        monkeypatch.setattr(Gis, "find_location", mockreturn)
         return rfc_result
 
     @pytest.fixture
@@ -52,6 +64,7 @@ class TestUserCreateResultAPI(
 
     def test_create_result_success(self, json, rfc_result):
         """Test that authenticated user can post results"""
+
         expected = "test_id"
         outcome = json.keys()
         assert expected in outcome

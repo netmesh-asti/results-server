@@ -4,14 +4,10 @@ import os
 
 class Gis:
 
-    def __init__(self, lat, lon):
-        self.location = None
-        self.lat = lat
-        self.lon = lon
-
-    def _find_location(self):
+    @staticmethod
+    def find_location(lat, lon):
         gmaps = googlemaps.Client(key=os.environ.get('GMAPS_TOKEN'))
-        data = {'lat': self.lat, 'lon': self.lon}
+        data = {'lat': lat, 'lon': lon}
         reverse_geocode_result = gmaps.reverse_geocode(
             (data['lat'],
              data['lon']),
@@ -47,11 +43,7 @@ class Gis:
                     data["barangay"] = None
                 else:
                     data["barangay"] = barangay
-        self.location = data
-        return self.location
-
-    def get_location(self):
-        location = self._find_location()
+        location = data
         return location
 
 
@@ -66,5 +58,5 @@ def get_client_ip(request):
 
 
 if __name__ == "__main__":
-    gis = Gis()
-    print(gis.get_location(15.02, 120.16))
+    gis = Gis.find_location(15.02, 120.16)
+    print(gis)
