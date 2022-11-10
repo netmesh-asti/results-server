@@ -578,3 +578,6 @@ class ActivatedMobDevice(models.Model):
         MobileDevice,
         on_delete=models.CASCADE
     )
+
+    def __str__(self):
+        return "%s<%s>" % (self.device.imei, self.device.owner.email)
