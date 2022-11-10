@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError
 
 from core.models import (
     MobileResult,
@@ -153,7 +153,7 @@ class ActivateMobileDeviceSerializer(serializers.ModelSerializer):
         registered_device = get_object_or_404(MobileDevice, imei=imei)
         try:
             ActivatedMobDevice.objects.get(device__imei=imei)
-            raise APIException(detail="Device Already Activated")
+            raise ValidationError(detail="Device Already Activated")
         except ActivatedMobDevice.DoesNotExist:
             obj = ActivatedMobDevice.objects.create(device=registered_device)
             return obj
