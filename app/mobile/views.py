@@ -202,7 +202,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = MobileDevice.objects.get(
-                    owner_id=int(self.kwargs['pk']),
+                    id=int(self.kwargs['pk']),
             )
         except MobileDevice.DoesNotExist:
             raise NotFound("No device was found.")
