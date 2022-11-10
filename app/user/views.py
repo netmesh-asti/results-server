@@ -17,7 +17,6 @@ from durin.models import Client, AuthToken
 from drf_spectacular.utils import (
     extend_schema)
 
-
 from user.serializers import (
     UserSerializer,
     UserProfileSerializer,
@@ -162,7 +161,11 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
 
     @action(methods=['DELETE', ], detail=True, url_path='remove-rfc-device')
     def remove_rfc_device(self, request, pk=None):
-        """Remove RFC Device From User"""
+        """
+        Remove RFC Device From User
+        No actual delete of the device object, we delete
+        the Authtoken only.
+        """
         user = get_object_or_404(get_user_model(), id=pk)
         client = Client.objects.get(name=request.data['name'])
         AuthToken.objects.get(user=user, client=client).delete()
@@ -196,11 +199,11 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         request=UserActiveSerializer,
         responses=UserActiveSerializer,
     )
-    @action(methods=['POST', ], detail=True, url_path='user-active')
+    @action(methods=['PATCH', ], detail=True, url_path='user-active')
     def user_active(self, request, pk=None):
         """Activate/Deactivate a User"""
         user = self.get_object()
-        serializer = self.get_serializer(user=user, data=request.data)
+        serializer = self.get_serializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
             AuthToken.objects.get(user=user).delete()
