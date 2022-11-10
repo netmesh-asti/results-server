@@ -574,10 +574,10 @@ class MobileDeviceUser(models.Model):
 
 
 class ActivatedMobDevice(models.Model):
-    device = models.OneToOneField(
+    imei = models.OneToOneField(
         MobileDevice,
         on_delete=models.CASCADE
     )
 
     def __str__(self):
-        return "%s<%s>" % (self.device.imei, self.device.owner.email)
+        return "%s<%s>" % (self.imei.imei, self.imei.owner.email)

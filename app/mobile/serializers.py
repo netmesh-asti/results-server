@@ -142,21 +142,19 @@ class MobileDeviceImeiSerializer(serializers.ModelSerializer):
 
 class ActivateMobileDeviceSerializer(serializers.ModelSerializer):
     """Serializer for the Activation of mobile devices"""
-    device = MobileDeviceImeiSerializer()
+    # device = MobileDeviceImeiSerializer()
+    imei = serializers.CharField()
 
     class Meta:
         model = ActivatedMobDevice
-        fields = ("device", )
+        fields = ("imei", )
 
     def create(self, validated_data):
-        imei = validated_data['device']['imei']
+        imei = validated_data['imei']
         registered_device = get_object_or_404(MobileDevice, imei=imei)
         try:
-            ActivatedMobDevice.objects.get(device__imei=imei)
+            ActivatedMobDevice.objects.get(imei=imei)
             raise ValidationError(detail="Device Already Activated")
         except ActivatedMobDevice.DoesNotExist:
-            obj = ActivatedMobDevice.objects.create(device=registered_device)
+            obj = ActivatedMobDevice.objects.create(imei=registered_device)
             return obj
-
-
-

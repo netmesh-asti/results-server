@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.test import TestCase
+
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -19,10 +19,10 @@ from pytest_drf import (
     Returns200,
     UsesGetMethod,
     UsesPostMethod,
-    AsUser
+    AsUser,
 )
 
-from pytest_lambda import lambda_fixture
+from pytest_lambda import lambda_fixture, static_fixture
 
 from durin.models import AuthToken, Client
 
@@ -144,6 +144,33 @@ class TestFTResultsViewset(ViewSetTest,):
             outcome = len(json)
             expected = 1
             assert expected == outcome
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def client(admin, admin_token):
+    api_client = APIClient()
+    api_client.credentials(**{
+        "Authorization": "Token {}".format(admin_token)
+    })
+    api_client.force_authenticate(user=admin)
+    return api_client
+
+
+@pytest.fixture
+def data(mobile_device_details):
+    MobileDevice.objects.create(**mobile_device_details)
+    return {
+                "imei": mobile_device_details['imei']
+            }
+
+
+@pytest.mark.django_db
+def test_device_activate_success(client, data):
+    url = reverse("mobile:activate-mobile")
+    res = client.post(url, data, format='json')
+    print(res)
+    assert res.status_code == status.HTTP_201_CREATED
 
     # def test_list_result_has_device(self):
     #     """test that individual result has device id"""
