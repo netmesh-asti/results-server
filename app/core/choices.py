@@ -25,7 +25,8 @@ ntc_region_choices = [
     ('CAR', 'Cordillera Administrative Region (CAR)'),
     ('BARMM', 'Bangsamoro Autonomous Region In Muslim Mindanao (BARMM)'),
     ('Central', 'NTC Region Central'),
-    ('unknown', 'Unknown')
+    ('unknown', 'Unknown'),
+    ('Demo', 'Demo')
 ]
 
 device_choices = [
