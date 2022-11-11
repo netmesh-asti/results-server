@@ -78,7 +78,7 @@ class MobileResultsView(generics.CreateAPIView):
                 raise ValidationError("lat and lon are required.")
             loc = Gis.find_location(lat, lon)
             if loc is None:
-                raise ValidationError("No Location found!")
+                raise NotFound("No Location found!")
             loc = models.Location.objects.create(**loc)
             ip = get_client_ip(self.request)
             NTCSpeedTest.objects.create(
