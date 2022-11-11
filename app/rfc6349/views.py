@@ -44,6 +44,7 @@ from rfc6349.serializers import (
 )
 
 from core.utils import Gis
+from django.utils import timezone
 
 
 class ResultLocation(Gis):
@@ -316,8 +317,8 @@ def RFC6349ResultsList(request):
 
 
 class MyUserRenderer (r.CSVRenderer):
-    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name', 'ntc_region', 'lat', 'lon', 'province', 'municipality',
-              'barangay', 'mtu', 'rtt', 'bb', 'bdp', 'rwnd', 'actual_thpt', 'max_achievable_thpt', 'tx_bytes', 'ave_rtt',
+    header = ['date_created', 'test_id', 'tester_email', 'tester_first_name', 'tester_last_name', 'ntc_region', 'lat', 'lon', 'province', 'municipality',
+              'barangay', 'direction',' mtu', 'rtt', 'bb', 'bdp', 'rwnd', 'actual_thpt', 'max_achievable_thpt', 'tx_bytes', 'ave_rtt',
               'rwnd', 'retransmit_bytes', 'ideal_transfer_time', 'transfer_time_ratio', 'tcp_efficiency', 'buffer_delay']
 
 
@@ -363,7 +364,7 @@ class RFC6349ResultCSV(APIView):
 
         # res = res.order_by(column_order)[starttable:starttable+lengthtable]
 
-        content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
+        content = [{'date_created': timezone.localtime(response.date_created).strftime('%Y-%m-%d %I:%M%p '),
                     'test_id': response.test_id,
                     'tester_email': response.tester.email,
                     'tester_first_name': response.tester.first_name,
