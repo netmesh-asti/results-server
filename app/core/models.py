@@ -95,7 +95,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     registration = models.DateField(auto_now_add=True)
-    nro = models.ForeignKey(NtcRegionalOffice, on_delete=models.CASCADE)
+    nro = models.ForeignKey(NtcRegionalOffice, on_delete=models.PROTECT)
     timezone = models.CharField(
         max_length=50,
         default='Asia/Manila',
@@ -121,10 +121,10 @@ class RfcDevice(models.Model):
         Model for the hardware (pc/laptop) device used
         by the RFC-6349 test agents
     """
-    client = models.OneToOneField(Client, on_delete=models.CASCADE)
+    client = models.OneToOneField(Client, on_delete=models.PROTECT)
     owner = models.ForeignKey(
         User,
-        on_delete=models.CASCADE)
+        on_delete=models.PROTECT)
     name = models.CharField(max_length=250, null=False)
     manufacturer = models.CharField(max_length=250, blank=True)
     product = models.CharField(max_length=250, blank=True)
@@ -153,10 +153,10 @@ class RfcDevice(models.Model):
 class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
     name = models.CharField(max_length=100, blank=False)
-    client = models.OneToOneField(Client, on_delete=models.CASCADE)
+    client = models.OneToOneField(Client, on_delete=models.PROTECT)
     owner = models.ForeignKey(
         User,
-        on_delete=models.CASCADE)
+        on_delete=models.PROTECT)
     serial_number = models.CharField(max_length=250, blank=True, unique=True)
     imei = models.CharField(max_length=250, blank=True, unique=True)
     phone_model = models.CharField(max_length=250, blank=True)
@@ -222,7 +222,7 @@ class Server(models.Model):
     )
 
     contributor = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                    on_delete=models.CASCADE)
+                                    on_delete=models.PROTECT)
 
     def __str__(self):
         return "%s (%s)" % (self.nickname, self.uuid)
@@ -262,7 +262,7 @@ class MobileResult(models.Model):
     ping = models.FloatField(default=0, null=True, blank=True)
     timestamp = models.DateTimeField()
     success = models.BooleanField()
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(Server, on_delete=models.PROTECT)
 
     class Meta:
         constraints = [
@@ -323,7 +323,7 @@ class RfcResult(models.Model):
         choices=choices.direction_choices,
         default='unknown'
     )
-    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    server = models.ForeignKey(Server, on_delete=models.PROTECT)
     mtu = models.IntegerField(null=True, blank=True, help_text="bytes")
     baseline_rtt = models.FloatField(null=True, blank=True, help_text="ms")
     rtt = models.FloatField(null=True, blank=True, help_text="ms")
@@ -445,11 +445,11 @@ class Speedtest(models.Model):
     )
     ip_address = models.ForeignKey(
         IPaddress,
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
     server = models.ForeignKey(
         Server,
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
     rtt_ave = models.FloatField(
         null=False
@@ -470,7 +470,7 @@ class Speedtest(models.Model):
 
 class PublicSpeedTest(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
-    result = models.ForeignKey(MobileResult, on_delete=models.CASCADE)
+    result = models.ForeignKey(MobileResult, on_delete=models.PROTECT)
     test_id = models.UUIDField(
         default=uuid.uuid4,
         null=True,
@@ -502,7 +502,7 @@ class Location(models.Model):
 
 class NTCSpeedTest(models.Model):
 
-    result = models.ForeignKey(MobileResult, on_delete=models.CASCADE)
+    result = models.ForeignKey(MobileResult, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
     test_id = models.UUIDField(
         default=uuid.uuid4,
@@ -511,11 +511,11 @@ class NTCSpeedTest(models.Model):
         blank=True,
         unique=True
     )
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT)
     tester = models.ForeignKey(User,
-                               on_delete=models.CASCADE)
+                               on_delete=models.PROTECT)
     test_device = models.ForeignKey(MobileDevice,
-                                    on_delete=models.CASCADE)
+                                    on_delete=models.PROTECT)
     client_ip = models.GenericIPAddressField("IP address of Speedtest Client.")
 
     def __str__(self):
@@ -524,7 +524,7 @@ class NTCSpeedTest(models.Model):
 
 class RfcTest(models.Model):
 
-    result = models.ForeignKey(RfcResult, on_delete=models.CASCADE)
+    result = models.ForeignKey(RfcResult, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
     test_id = models.UUIDField(
         default=uuid.uuid4,
@@ -533,11 +533,11 @@ class RfcTest(models.Model):
         blank=True,
         unique=True
     )
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT)
     tester = models.ForeignKey(User,
-                               on_delete=models.CASCADE)
+                               on_delete=models.PROTECT)
     test_device = models.ForeignKey(RfcDevice,
-                                    on_delete=models.CASCADE)
+                                    on_delete=models.PROTECT)
     client_ip = models.GenericIPAddressField("IP address of RFC Client.")
 
     class Meta:
@@ -548,8 +548,8 @@ class RfcTest(models.Model):
 
 
 class RfcDeviceUser(models.Model):
-    device = models.ForeignKey(RfcDevice, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    device = models.ForeignKey(RfcDevice, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     assigned_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -561,8 +561,8 @@ class RfcDeviceUser(models.Model):
 
 
 class MobileDeviceUser(models.Model):
-    device = models.ForeignKey(MobileDevice, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    device = models.ForeignKey(MobileDevice, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     assigned_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -576,7 +576,7 @@ class MobileDeviceUser(models.Model):
 class ActivatedMobDevice(models.Model):
     imei = models.OneToOneField(
         MobileDevice,
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
 
     def __str__(self):
