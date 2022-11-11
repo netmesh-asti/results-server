@@ -44,6 +44,7 @@ from core.models import (
     ActivatedMobDevice
 )
 from . import permissions as custom_permission
+from django.utils import timezone
 
 
 class MobileResultsView(generics.CreateAPIView):
@@ -232,13 +233,13 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
 
 
 class ListUserMobileDevices(generics.ListAPIView):
-    serializer_class = MobileDeviceUsersSerializer
+    serializer_class = MobileDeviceSerializer
     permission_classes = (permissions.IsAuthenticated, )
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
         user = self.request.user
-        return MobileDeviceUser.objects.filter(user__email=user)
+        return MobileDevice.objects.filter(owner=user)
 
 
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
@@ -247,8 +248,8 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated, ]
 
     def get_object(self):
-        lookup_field = self.kwargs["serial_number"]
-        return get_object_or_404(MobileDevice, serial_number=lookup_field)
+        lookup_field = self.kwargs["id"]
+        return get_object_or_404(MobileDevice, id=lookup_field)
 
 search_csv = ''
 
@@ -320,7 +321,7 @@ def MobileResultsList(request):
 
 
 class MyUserRenderer (r.CSVRenderer):
-    header = ['date_created', 'test_id', 'tester_first_name', 'tester_last_name',
+    header = ['date_created',  'test_id', 'tester_email', 'tester_first_name', 'tester_last_name',
               'ntc_region', 'td_android_version',
               'td_imei', 'td_phone_model', 'download', 'upload', 'ping',
               'jitter', 'mcc', 'mnc', 'tac', 'network_type', 'operator',
@@ -373,12 +374,17 @@ class MobileResultCSV(APIView):
 
         # response = response.order_by(column_order)[starttable:starttable+lengthtable]
 
-        content = [{'date_created': response.date_created.strftime("%Y-%m-%d %-I:%M %p"),
+        content = [{'date_created': timezone.localtime(response.date_created).strftime('%Y-%m-%d %I:%M%p '),
                     'test_id': response.test_id,
-                    'tester_email': response.tester.email,
+                    'tester_email': response.tester.email,  
                     'tester_first_name': response.tester.first_name,
                     'tester_last_name': response.tester.last_name,
                     'ntc_region': response.tester.nro.region,
+                    'lat': response.location.lat,
+                    'lon': response.location.lon,
+                    'province': response.location.province,
+                    'municipality': response.location.municipality,
+                    'barangay': response.location.barangay,
                     'td_android_version': response.test_device.android_version,
                     'td_imei': response.test_device.imei,
                     'td_phone_model': response.test_device.phone_model,
@@ -395,11 +401,6 @@ class MobileResultCSV(APIView):
                     'signal_quality': response.result.signal_quality,
                     'ssid': response.result.ssid,
                     'bssid': response.result.bssid,
-                    'lat': response.location.lat,
-                    'lon': response.location.lon,
-                    'province': response.location.province,
-                    'municipality': response.location.municipality,
-                    'barangay': response.location.barangay,
                     }
                    for response in response]
         return Response(content)
