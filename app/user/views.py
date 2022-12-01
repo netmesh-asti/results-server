@@ -203,10 +203,12 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
     def user_active(self, request, pk=None):
         """Activate/Deactivate a User"""
         user = self.get_object()
+        print(user)
         serializer = self.get_serializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            AuthToken.objects.get(user=user).delete()
+            client = Client.objects.get(name=TEST_CLIENT_NAME)
+            AuthToken.objects.get(user=user, client=client).delete()
             return response.Response(
                 serializer.data,
                 status=status.HTTP_200_OK)
