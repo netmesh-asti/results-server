@@ -238,9 +238,7 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='assigned-devices')
     def assigned_devices(self, request):
         response = MobileDeviceUser.objects.filter(user__nro__region=request.user.nro.region)
-        print(response)
         serializer = MobileDeviceAssignedUsersSerializer(response, many=True)
-        print(serializer)
         return Response(
                 serializer.data,
                 status=status.HTTP_200_OK)
