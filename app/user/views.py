@@ -37,7 +37,8 @@ from core.models import (
     PublicSpeedTest,
     RfcDeviceUser,
     NTCSpeedTest,
-    RfcTest
+    RfcTest,
+    MobileDeviceUser
 )
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
@@ -185,11 +186,13 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
 
+
     @action(methods=['DELETE', ], detail=True, url_path='remove-mobile-device')
     def remove_mobile_device(self, request, pk=None):
-        """Remove RFC Device From User"""
+        """Remove Mobile Device From User"""
         user = get_object_or_404(get_user_model(), id=pk)
         client = Client.objects.get(name=request.data['name'])
+        MobileDeviceUser.objects.filter(id=request.data['mobile_id']).delete()
         AuthToken.objects.get(user=user, client=client).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 

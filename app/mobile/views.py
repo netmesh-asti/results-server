@@ -20,7 +20,7 @@ from core import utils, models
 from django.db.models import Q
 from rest_framework_csv import renderers as r
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from core.utils import Gis, get_client_ip
@@ -33,6 +33,7 @@ from mobile.serializers import (
     ListMobileSerializer,
     MobileDeviceUsersSerializer,
     ActivateMobileDeviceSerializer,
+    MobileDeviceAssignedUsersSerializer
 )
 
 from core.models import (
@@ -185,6 +186,9 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
             return MobileDeviceSerializer
         elif self.action == "update":
             return MobileDeviceSerializer
+        elif self.action == "assigned_devices":
+            return MobileDeviceAssignedUsersSerializer
+
 
     def get_queryset(self):
         if self.action == "create":
@@ -231,6 +235,16 @@ class ManageMobileDeviceView(viewsets.ModelViewSet):
         AuthToken.objects.create(user=user, client=client)
         serializer.save(client=client)
 
+    @action(methods=['GET'], detail=False, url_path='assigned-devices')
+    def assigned_devices(self, request):
+        response = MobileDeviceUser.objects.filter(user__nro__region=request.user.nro.region)
+        print(response)
+        serializer = MobileDeviceAssignedUsersSerializer(response, many=True)
+        print(serializer)
+        return Response(
+                serializer.data,
+                status=status.HTTP_200_OK)
+
 
 class ListUserMobileDevices(generics.ListAPIView):
     serializer_class = MobileDeviceSerializer
@@ -240,6 +254,7 @@ class ListUserMobileDevices(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return MobileDevice.objects.filter(owner=user)
+
 
 
 class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):

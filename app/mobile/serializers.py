@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
 
 from core.models import (
     MobileResult,
@@ -123,12 +124,15 @@ class MobileDeviceUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def create(self, validated_data):
-        instance = MobileDeviceUser.objects.create(**validated_data)
-        mobile_device_instance = MobileDeviceUser.objects.get(id=instance.id)
-        device_name = mobile_device_instance.device.imei
-        client = Client.objects.get(name=device_name)
-        AuthToken.objects.create(user=mobile_device_instance.user, client=client)
-        return instance
+         try:
+            instance = MobileDeviceUser.objects.create(**validated_data)
+            mobile_device_instance = MobileDeviceUser.objects.get(id=instance.id)
+            device_name = mobile_device_instance.device.imei
+            client = Client.objects.get(name=device_name)
+            AuthToken.objects.create(user=mobile_device_instance.user, client=client)
+            return instance
+         except IntegrityError:
+            raise ValidationError('Already Assigned')
 
 
 class MobileDeviceImeiSerializer(serializers.ModelSerializer):
@@ -158,3 +162,19 @@ class ActivateMobileDeviceSerializer(serializers.ModelSerializer):
         except ActivatedMobDevice.DoesNotExist:
             obj = ActivatedMobDevice.objects.create(imei=registered_device)
             return obj
+
+
+
+class MobileDeviceAssignedUsersSerializer(serializers.ModelSerializer):
+    """Serializer for assigned mobile devices to users"""
+    user = UserSerializer()
+    device = ListMobileSerializer()
+    class Meta:
+        model = MobileDeviceUser
+        fields = (
+            "id",
+            "assigned_date",
+            "user",
+            "device"
+        )
+
