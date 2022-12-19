@@ -61,6 +61,7 @@ class NtcRegionalOffice(models.Model):
         return f"{self.region}"
 
 
+
 class UserManager(BaseUserManager):
 
     def create_user(self, email, nro, password=None, **kwargs):
@@ -76,7 +77,7 @@ class UserManager(BaseUserManager):
         """
         Create and save a SuperUser with the given email and password.
         """
-        superuser_office = NtcRegionalOffice.objects.get(id=nro.id)
+        superuser_office = NtcRegionalOffice.objects.get(id=nro)
         user = self.create_user(
             email,
             superuser_office,

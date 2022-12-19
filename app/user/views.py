@@ -8,7 +8,7 @@ from rest_framework import (
     status,
     response)
 from rest_framework.exceptions import ValidationError
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 
 from durin.settings import durin_settings
 from durin.auth import TokenAuthentication
@@ -37,7 +37,8 @@ from core.models import (
     PublicSpeedTest,
     RfcDeviceUser,
     NTCSpeedTest,
-    RfcTest
+    RfcTest,
+    MobileDeviceUser
 )
 from core.scheme import DurinTokenScheme
 from app.settings import TEST_CLIENT_NAME
@@ -45,6 +46,9 @@ from io import StringIO
 import zipfile
 import csv
 from django.http import JsonResponse, HttpResponse
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+
+
 
 
 class CustomTokenScheme(DurinTokenScheme):
@@ -185,11 +189,13 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
 
+
     @action(methods=['DELETE', ], detail=True, url_path='remove-mobile-device')
     def remove_mobile_device(self, request, pk=None):
-        """Remove RFC Device From User"""
+        """Remove Mobile Device From User"""
         user = get_object_or_404(get_user_model(), id=pk)
         client = Client.objects.get(name=request.data['name'])
+        MobileDeviceUser.objects.filter(id=request.data['mobile_id']).delete()
         AuthToken.objects.get(user=user, client=client).delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -203,10 +209,12 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
     def user_active(self, request, pk=None):
         """Activate/Deactivate a User"""
         user = self.get_object()
+        print(user)
         serializer = self.get_serializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            AuthToken.objects.get(user=user).delete()
+            client = Client.objects.get(name=TEST_CLIENT_NAME)
+            AuthToken.objects.get(user=user, client=client).delete()
             return response.Response(
                 serializer.data,
                 status=status.HTTP_200_OK)
@@ -253,7 +261,8 @@ class AuthTokenView(LoginView):
         """
         return UserSerializer
 
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def csv1(request, csv_id):
         csv_uuid = csv_id
         if csv_uuid == '986b9010-1809-4093-9d73-e38bd039bfb3':
@@ -271,8 +280,8 @@ def csv1(request, csv_id):
                 writer.writerow(std)
 
             writer2 = csv.writer(output2)
-            writer2.writerow(['test_id_id','lat','lon','date_tested','ave_tcp_tput','tcp_eff','ave_rtt'])
-            ia = RfcTest.objects.values_list('test_id', 'location__lat','location__lon','date_created','result__actual_thpt','result__tcp_efficiency','result__ave_rtt')
+            writer2.writerow(['test_id_id','lat','lon','date_tested','ave_tcp_tput','tcp_eff','ave_rtt','mode'])
+            ia = RfcTest.objects.values_list('test_id', 'location__lat','location__lon','date_created','result__actual_thpt','result__tcp_efficiency','result__ave_rtt','result__direction')
             for iad in ia:
                 writer2.writerow(iad)
 
