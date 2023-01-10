@@ -89,7 +89,7 @@ class TestAdminCreateRfcDeviceAPI(
     APIViewTest,
     Returns201,
     UsesPostMethod,
-    AsUser('admin')
+    AsUser('admin_user')
 ):
 
     url = lambda_fixture(lambda: reverse("rfc6349:rfc-device-list"))
@@ -97,13 +97,6 @@ class TestAdminCreateRfcDeviceAPI(
     @pytest.fixture
     def data(self, api_rfc_device_details):
         return api_rfc_device_details
-
-    @pytest.fixture
-    def client(self, unauthed_client, admin, admin_token):
-        client = APIClient()
-        client.credentials(**{"Authorization": "Token {}".format(admin_token)})
-        client.force_authenticate(user=admin)
-        return client
 
     def test_create_device_success(self, json, api_rfc_device_details):
         """Test that admin can create device for user"""
@@ -118,23 +111,11 @@ class TestAdminListDevices(
     APIViewTest,
     UsesGetMethod,
     Returns200,
-    AsUser('admin')
+    AsUser('admin_user')
 ):
 
     url = lambda_fixture(lambda: reverse("rfc6349:rfc-device-list") )
 
-    @pytest.fixture
-    def client(self, unauthed_client, admin, admin_token, rfc_device_details):
-        device = models.RfcDevice.objects.create(
-            **rfc_device_details
-        )
-        client = APIClient()
-        client.credentials(
-            **{"Authorization": "Token {}".format(admin_token)}
-        )
-        client.force_authenticate(user=admin)
-        return client
-
-    def test_list_device_success(self, json):
+    def test_list_device_success(self, rfc_device, json):
         """Test that Admin can list all registered devices"""
         assert len(json) > 0

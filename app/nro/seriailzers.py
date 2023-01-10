@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from core.models import (
-    NtcRegionalOffice,
+    RegionalOffice,
 )
 
 
@@ -8,5 +8,5 @@ class NroSerializer(serializers.ModelSerializer):
     """Serializer for regional offices"""
 
     class Meta:
-        model = NtcRegionalOffice
+        model = RegionalOffice
         fields = "__all__"

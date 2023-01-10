@@ -57,25 +57,34 @@ class ResultLocation(Gis):
 
 
 class Rfc6349ResView(generics.ListCreateAPIView):
+    """
+    Listing and Creating RFC 6349 app results
+    Delete nor Update is not allowed
+    """
     serializer_class = Rfc6349ResultSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        queryset = RfcResult.objects.all().order_by('-timestamp')
-        return queryset
+        if self.request.method == "POST":
+            raise
+            return RfcResult.objects.all()
+        else:
+            if self.request.user.is_superuser:
+                return RfcTest.objects.all().order_by('-date_created')
+            elif self.request.user.is_staff:
+                return RfcTest.objects.filter(
+                    tester__office=self.request.user.agent.office)
+            return self.request.user.agent.rfctest_set.all().order_by(
+                '-date_created')
 
     def perform_create(self, serializer):
-        token = self.request.auth
-        client = AuthToken.objects.select_related('client').get(
-            token=token).client
         try:
-            device = RfcDevice.objects.get(client=client)
+            device = RfcDevice.objects.get(
+                client__auth_token_set__token__exact=self.request.auth
+            )
         except RfcDevice.DoesNotExist as e:
             raise Http404(e)
-        user = get_object_or_404(
-            User,
-            email=self.request.user)
         obj = serializer.save()
         lat = float(self.request.data.get('lat'))
         lon = float(self.request.data.get('lon'))
@@ -88,7 +97,7 @@ class Rfc6349ResView(generics.ListCreateAPIView):
         ip = get_client_ip(self.request)
         RfcTest.objects.create(
             result_id=obj.id,
-            tester=user,
+            tester=self.request.user.agent,
             test_device=device,
             location=loc,
             client_ip=ip
@@ -96,77 +105,35 @@ class Rfc6349ResView(generics.ListCreateAPIView):
 
 
 class RfcDeviceView(viewsets.ModelViewSet):
-    queryset = RfcDevice.objects.all()
+    """
+    Create, List, Retrieve, Update, Delete
+    """
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAdminUser]
 
     def get_serializer_class(self):
-        if self.request.query_params.get('check_name'):
-            return RfcDeviceNameSerializer
-        return RfcDeviceSerializer
+        if self.action in ("create", "list"):
+            return RfcDeviceSerializer
 
     def get_queryset(self):
         if self.action == "list":
-            name = self.request.query_params.get('check_name')
-            if name:
-                device_query = RfcDevice.objects.filter(
-                    client__name=name
-                )
-                if device_query.exists():
-                    raise ValidationError("The client name is already taken. ")
-            email = self.request.user
-            admin = get_user_model().objects.get(email=email)
-            device_query = RfcDevice.objects.filter(
-                owner__nro=admin.nro)
-            return device_query
+            if self.request.user.is_superuser:
+                return RfcDevice.objects.all()
+            elif self.request.user.is_staff:
+                return RfcDevice.objects.filter(
+                    users__office=self.request.user.agent.office)
+            return self.request.user.agent.rfcdevice_set.all()
+        elif self.action == "create":
+            return RfcDevice.objects.all()
 
         return self.queryset
 
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='check_name',
-                description='Client Name',
-                type=str),
-        ],
-    )
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    @extend_schema(
-        parameters=[
-        ],
-        request=RfcDeviceSerializer,
-        responses=RfcDeviceSerializer
-    )
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-
     def perform_create(self, serializer):
         name = self.request.data['name']
-        device_user = self.request.data['owner']
-        user = get_user_model().objects.get(id=device_user)
         if Client.objects.filter(name=name).exists():
             raise ValidationError("The name already exists.")
         client = Client.objects.create(name=name)
-        AuthToken.objects.create(client=client, user=user)
-        serializer.save(client=client, owner=user)
+        serializer.save(client=client)
 
 
 class AdminRfcTestsView(viewsets.ReadOnlyModelViewSet):

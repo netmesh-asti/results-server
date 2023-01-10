@@ -1,7 +1,7 @@
 from django.core.management import BaseCommand
-from core.models import NtcRegionalOffice
+from core.models import RegionalOffice
 
-from core.choices import ntc_region_choices
+from core.choices import region_choices
 
 
 class Command(BaseCommand):
@@ -9,11 +9,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print("Creating NRO for superuser if not exists")
-        for region_id, region_desc in ntc_region_choices:
-            nro = NtcRegionalOffice.objects.filter(region=region_id)
+        for region_id, region_desc in region_choices:
+            nro = RegionalOffice.objects.filter(region=region_id)
             if not nro.exists():
                 print("No NRO found. Creating...")
-                NtcRegionalOffice.objects.create(
+                RegionalOffice.objects.create(
                     region=region_id,
                     description=region_desc)
                 print("Done!")

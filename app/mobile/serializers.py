@@ -5,9 +5,7 @@ from rest_framework.exceptions import ValidationError
 from core.models import (
     MobileResult,
     MobileDevice,
-    NTCSpeedTest,
-    MobileDeviceUser,
-    ActivatedMobDevice,
+    NTCSpeedTest, LinkedMobileDevice,
 )
 
 from durin.models import (
@@ -16,25 +14,11 @@ from durin.models import (
 )
 
 from location.serializers import LocationSerializer
-from user.serializers import UserSerializer 
+from user.serializers import UserSerializer, AgentSerializer
 
 
 class ListMobileSerializer(serializers.ModelSerializer):
     owner = UserSerializer()
-
-    class Meta:
-        model = MobileDevice
-        fields = (
-            "id",
-            "name",
-            "serial_number",
-            "imei",
-            "phone_model",
-            "android_version",
-            "ram",
-            "storage",
-            "owner",
-        )
 
 
 class MobileDeviceSerializer(serializers.ModelSerializer):
@@ -52,9 +36,23 @@ class MobileDeviceSerializer(serializers.ModelSerializer):
             "android_version",
             "ram",
             "storage",
-            "owner",
-          
          )
+
+        read_only_fields = ("id",)
+
+
+class MobileDeviceUsersSerializer(serializers.ModelSerializer):
+    """Serializer for adding Users of a Mobile Device"""
+    class Meta:
+        model = MobileDevice
+        fields = ("users",)
+
+
+class MobileDeviceActivationSerializer(serializers.ModelSerializer):
+    """Serializer for adding Users of a Mobile Device"""
+    class Meta:
+        model = MobileDevice
+        fields = ("is_active",)
 
 
 class MobileResultsSerializer(serializers.ModelSerializer):
@@ -68,7 +66,7 @@ class MobileResultsSerializer(serializers.ModelSerializer):
 
 class NtcMobileResultsSerializer(serializers.ModelSerializer):
     """SerializeR for NTC Field Tester Test Results"""
-    tester = UserSerializer(read_only=True)
+    tester = AgentSerializer(read_only=True)
     test_device = MobileDeviceSerializer(read_only=True)
     result = MobileResultsSerializer(read_only=True)
     location = LocationSerializer(read_only=True)
@@ -107,30 +105,6 @@ class MobileResultsListSerializer(serializers.ModelSerializer):
             "location")
 
 
-class MobileDeviceUsersSerializer(serializers.ModelSerializer):
-    """Serializers for the list of mobile device users"""
-
-    class Meta:
-        model = MobileDevice
-        fields = "__all__"
-
-
-class MobileDeviceUserSerializer(serializers.ModelSerializer):
-    """Serializer for assigning mobile device to user"""
-    class Meta:
-        model = MobileDeviceUser
-        fields = ('id', 'user', 'device')
-        read_only_fields = ('id',)
-
-    def create(self, validated_data):
-        instance = MobileDeviceUser.objects.create(**validated_data)
-        mobile_device_instance = MobileDeviceUser.objects.get(id=instance.id)
-        device_name = mobile_device_instance.device.imei
-        client = Client.objects.get(name=device_name)
-        AuthToken.objects.create(user=mobile_device_instance.user, client=client)
-        return instance
-
-
 class MobileDeviceImeiSerializer(serializers.ModelSerializer):
     """Serializer for the mobile device imei"""
 
@@ -140,21 +114,11 @@ class MobileDeviceImeiSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
 
-class ActivateMobileDeviceSerializer(serializers.ModelSerializer):
-    """Serializer for the Activation of mobile devices"""
-    # device = MobileDeviceImeiSerializer()
-    imei = serializers.CharField()
+class LinkedMobileDeviceSerializer(serializers.ModelSerializer):
+    """Serializer for linked mobile devices to owner"""
+    imei = serializers.CharField(max_length=250, read_only=True)
 
     class Meta:
-        model = ActivatedMobDevice
-        fields = ("imei", )
-
-    def create(self, validated_data):
-        imei = validated_data['imei']
-        registered_device = get_object_or_404(MobileDevice, imei=imei)
-        try:
-            ActivatedMobDevice.objects.get(imei=imei)
-            raise ValidationError(detail="Device Already Activated")
-        except ActivatedMobDevice.DoesNotExist:
-            obj = ActivatedMobDevice.objects.create(imei=registered_device)
-            return obj
+        model = LinkedMobileDevice
+        fields = ("imei",)
+        read_only_fields = ("id",)

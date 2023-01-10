@@ -4,7 +4,7 @@ import pytz
 import pytest
 from durin.models import Client
 from django.contrib.auth import get_user_model
-
+from rest_framework.test import APIClient
 from durin.models import AuthToken
 
 from core import models
@@ -12,40 +12,49 @@ from rfc6349.views import ResultLocation
 
 
 @pytest.fixture
-def user_info(nro):
+def user_info():
     return {
         "email": 'test@example.com',
         "password": 'testpassword123',
         "first_name": 'NTC',
         "last_name": 'Netmesh',
-        "nro": nro
     }
 
 
 @pytest.fixture
-def admin_info(nro):
+def admin_info():
     return {
         "email": 'admin@example.com',
         "password": 'testpassword123',
         "first_name": 'ADMIN',
         "last_name": 'USER',
-        "nro": nro
     }
 
 
 @pytest.mark.django_db
 @pytest.fixture
-def user(user_info):
-    return get_user_model().objects.create_user(
+def user(user_info, office):
+    user = get_user_model().objects.create_user(
         **user_info
+    )
+    return user
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def agent(user, office):
+    return models.Agent.objects.create(
+        agent=user,
+        office=office
     )
 
 
 @pytest.mark.django_db
 @pytest.fixture
-def admin(admin_info):
-    return get_user_model().objects.create_superuser(
-        **admin_info
+def admin_agent(admin_user, office):
+    return models.Agent.objects.create(
+        agent=admin_user,
+        office=office
     )
 
 
@@ -60,7 +69,7 @@ def nro_info():
 @pytest.mark.django_db
 @pytest.fixture
 def nro(nro_info):
-    return models.NtcRegionalOffice.objects.create(**nro_info)
+    return models.RegionalOffice.objects.create(**nro_info)
 
 
 @pytest.mark.django_db
@@ -92,7 +101,7 @@ def server_info(user):
 
 @pytest.mark.django_db
 @pytest.fixture
-def client():
+def token_client():
     return Client.objects.create(name="TestClient")
 
 
@@ -176,7 +185,7 @@ def rfc_result(server):
 
 @pytest.mark.django_db
 @pytest.fixture
-def mobile_device_details(mobile_client, user):
+def mobile_device_details(mobile_client):
     return {
         "serial_number": "123456",
         "imei": "43432423432",
@@ -185,12 +194,25 @@ def mobile_device_details(mobile_client, user):
         "ram": "8",
         "storage": "10000",
         "client": mobile_client,
-        "owner": user
+    }
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def api_mobile_device_details(mobile_client):
+    return {
+        "name": "Example_Name",
+        "serial_number": "1234567",
+        "imei": "434324234321",
+        "phone_model": "Samsung S22",
+        "android_version": "8",
+        "ram": "8",
+        "storage": "10000",
     }
 
 
 @pytest.fixture
-def rfc_device_details(user, durin_client ):
+def rfc_device_details(agent, durin_client):
     return {
         "serial_number": "123456",
         "name": durin_client.name,
@@ -201,12 +223,12 @@ def rfc_device_details(user, durin_client ):
         "kernel": "5.15",
         "ram": "8",
         "disk": "10000",
-        "client": durin_client,
-        "owner": user
+        "client": durin_client
     }
 
+
 @pytest.fixture
-def api_rfc_device_details(user, durin_client ):
+def api_rfc_device_details(agent, durin_client ):
     return {
         "serial_number": "123456",
         "name": "TestDevice",
@@ -217,8 +239,7 @@ def api_rfc_device_details(user, durin_client ):
         "kernel": "5.15",
         "ram": "8",
         "disk": "10000",
-        "client": durin_client,
-        "owner": user.id
+        "client": durin_client
     }
 
 
@@ -270,3 +291,60 @@ def location():
             "municipality": "Quezon City",
             "barangay": "Krus Na Ligas"
     }
+
+
+@pytest.fixture
+def authenticated_user(user, user_token):
+    client = APIClient()
+    client.credentials(**{
+            "Authorization": "Token {}".format(user_token)
+    })
+    client.force_authenticate(user=user, token=user_token)
+    return client
+
+
+@pytest.fixture
+def authenticated_staff(admin, admin_token):
+    client = APIClient()
+    client.credentials(**{
+            "Authorization": "Token {}".format(admin_token)
+    })
+    client.force_authenticate(user=admin, token=admin_token)
+    return client
+
+
+@pytest.fixture
+def office(nro):
+    return models.Office.objects.create(
+        name="Example_Agency",
+        region=nro)
+
+
+@pytest.fixture
+@pytest.mark.django_db
+def rfc_device(rfc_device_details):
+    return models.RfcDevice.objects.create(
+        **rfc_device_details
+    )
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def mobile_device(mobile_client) -> models.MobileDevice:
+    return models.MobileDevice.objects.create(**{
+        "name": "Example Name",
+        "serial_number": "123456",
+        "imei": "43432423432",
+        "phone_model": "Samsung S22",
+        "android_version": "8",
+        "ram": "8",
+        "storage": "10000",
+        "client": mobile_client,
+    })
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def user_mobile_device(mobile_device, agent):
+    mobile_device.users.add(agent)
+    return mobile_device

@@ -25,10 +25,8 @@ from app.settings import TEST_CLIENT_NAME
 from core.models import (
     RfcDevice,
     RfcDeviceUser,
-    MobileDeviceUser,
     MobileDevice
 )
-from core.choices import ntc_region_choices
 
 USER_MANAGE_URL = reverse("user:ft-list")  # create and list
 GET_TOKEN_URL = reverse("user:token")
@@ -130,19 +128,10 @@ class TestAssignRfcDeviceToUser(
             "device": device.id,
         }
 
-    @pytest.fixture
-    def client(self, unauthed_client, admin, admin_token):
-        client = APIClient()
-        client.credentials(**{
-            "Authorization": "Token {}".format(admin_token)
-        })
-        client.force_authenticate(user=admin)
-        return client
-
     class TestAssignRfcDevice(
         UsesPostMethod,
         Returns200,
-        AsUser('admin')
+        AsUser('admin_user')
     ):
         url = lambda_fixture(lambda: reverse("user:ft-assign-rfc-device"))
 
@@ -167,42 +156,23 @@ class TestAssignMobileDeviceToUser(
             "device": device.id,
         }
 
-    @pytest.fixture
-    def client(self, unauthed_client, admin, admin_token):
-        client = APIClient()
-        client.credentials(**{
-            "Authorization": "Token {}".format(admin_token)
-        })
-        client.force_authenticate(user=admin)
-        return client
-
-    class TestAssignMobileDevice(
-        UsesPostMethod,
-        Returns200,
-        AsUser('admin')
-    ):
-        url = lambda_fixture(lambda: reverse("user:ft-assign-mobile-device"))
-
-        def test_instance_created(self, user, json):
-            instance = MobileDeviceUser.objects.get(id=json['id'])
-            # print(instance.device, instance.user)
-            assert instance.user == user
+    # class TestAssignMobileDevice(
+    #     UsesPostMethod,
+    #     Returns200,
+    #     AsUser('admin_user')
+    # ):
+    #     url = lambda_fixture(lambda: reverse("user:ft-assign-mobile-device"))
+    #
+    #     def test_instance_created(self, user, json):
+    #         instance = MobileDeviceUser.objects.get(id=json['id'])
+    #         # print(instance.device, instance.user)
+    #         assert instance.user == user
 
 
 @pytest.mark.django_db
 class TestUserActiveInDB(
     ViewSetTest
 ):
-
-    @pytest.fixture
-    def client(self, unauthed_client, admin, admin_token, user_token, durin_client):
-        client = APIClient()
-        client.credentials(**{
-            "Authorization": "Token {}".format(admin_token)
-        })
-
-        client.force_authenticate(user=admin)
-        return client
 
     data = static_fixture({
         "is_active": False
@@ -211,7 +181,7 @@ class TestUserActiveInDB(
     class TestSetActive(
         UsesPatchMethod,
         Returns200,
-        # AsUser('admin')
+        AsUser('admin_user')
     ):
         url = lambda_fixture(lambda user: url_for("user:ft-user-active", user.pk))
 

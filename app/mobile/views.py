@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.exceptions import ValidationError, NotFound
+from rest_framework.serializers import ModelSerializer
 
 from rest_framework.response import Response
 
@@ -20,7 +21,7 @@ from core import utils, models
 from django.db.models import Q
 from rest_framework_csv import renderers as r
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from core.utils import Gis, get_client_ip
@@ -30,21 +31,18 @@ from mobile.serializers import (
     NtcMobileResultsSerializer,
     MobileDeviceSerializer,
     MobileResultsListSerializer,
-    ListMobileSerializer,
-    MobileDeviceUsersSerializer,
-    ActivateMobileDeviceSerializer,
+    MobileDeviceUsersSerializer, MobileDeviceActivationSerializer, LinkedMobileDeviceSerializer
 )
 
 from core.models import (
     MobileResult,
     MobileDevice,
     PublicSpeedTest,
-    NTCSpeedTest,
-    MobileDeviceUser,
-    ActivatedMobDevice
+    NTCSpeedTest, LinkedMobileDevice
 )
 from . import permissions as custom_permission
 from django.utils import timezone
+
 
 
 class MobileResultsView(generics.CreateAPIView):
@@ -63,7 +61,7 @@ class MobileResultsView(generics.CreateAPIView):
         else:
             client = AuthToken.objects.select_related('client').get(
                 token=token
-            ).client
+            ).token_client
 
             device = get_object_or_404(MobileDevice, client=client)
             user = get_object_or_404(
@@ -102,9 +100,8 @@ class AdminMobileTestsView(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
-        user = get_user_model().objects.get(email=self.request.user)
         return NTCSpeedTest.objects.filter(
-            tester__nro__region=user.nro.region)
+            tester__agency=self.request.user.agent.office)
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
@@ -136,8 +133,13 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
-        return NTCSpeedTest.objects.filter(
-            tester__email=self.request.user)
+        if self.action == "list":
+            if self.request.user.is_superuser:
+                return NTCSpeedTest.objects.all()
+            elif self.request.user.is_staff:
+                return NTCSpeedTest.objects.filter(
+                    tester__agency=self.request.user.employee_set.office)
+            return self.request.user.agent.ntcspeedtest_set.all().order_by("-date_created")
 
     def retrieve(self, request, *args, **kwargs):
         """List results from field tester"""
@@ -151,13 +153,6 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    def list(self, request, *args, **kwargs):
-        """List all results from staff's regions"""
-        queryset = NTCSpeedTest.objects.filter(tester__email=self.request.user).order_by("-date_created")
-        serializer = NtcMobileResultsSerializer(
-            queryset, many=True)
-        return Response(serializer.data)
-
 
 # class RetrieveUserMobileResultDetail(generics.RetrieveAPIView):
 #     serializer_class = NtcMobileResultsSerializer
@@ -169,67 +164,100 @@ class UserMobileTestsView(viewsets.ReadOnlyModelViewSet):
 #         return get_object_or_404(NTCSpeedTest, test_id=lookup_field)
 
 
-class ManageMobileDeviceView(viewsets.ModelViewSet):
-    """Manage Enrollment of Mobile Devices for Staffs"""
-    # serializer_class = MobileDeviceSerializer
-    permission_classes = (permissions.IsAdminUser,)
+class MobileDeviceView(viewsets.ModelViewSet):
+    """
+    Create, List, Retrieve, Update Mobile Devices
+    Admin: Full
+    authenticated: ReadOnly
+
+    """""
+    permission_classes = (custom_permission.IsAdminFull,)
     authentication_classes = (TokenAuthentication, )
-
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return MobileDeviceSerializer
-        elif self.action == "list":
-            return ListMobileSerializer
-        elif self.action == "retrieve":
-            return MobileDeviceSerializer
-        elif self.action == "update":
-            return MobileDeviceSerializer
 
     def get_queryset(self):
         if self.action == "create":
             return MobileDevice.objects.all()
+
         elif self.action == "list":
-            staff = get_user_model().objects.get(
-                email=self.request.user
-            )
-            return MobileDevice.objects.filter(
-                owner__nro=staff.nro
-            )
+            if self.request.user.is_superuser:
+                return MobileDevice.objects.all().order_by('name')
+            elif self.request.user.is_staff:
+                return MobileDevice.objects.filter(
+                    users__office__exact=self.request.user.agent.office)
+            return self.request.user.agent.mobiledevice_set.all().order_by(
+                'name')
 
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            instance = MobileDevice.objects.get(
-                    id=int(self.kwargs['pk']),
-            )
-        except MobileDevice.DoesNotExist:
-            raise NotFound("No device was found.")
+        elif self.action == "link":
+            return MobileDevice.objects.all()
 
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        # For retrieve, partial_update, add-user, remove-user, activation
+        return MobileDevice.objects.filter(pk=self.kwargs['pk'])
 
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = MobileDevice.objects.get(id=int(self.kwargs['pk']))
-            print(instance)
-        except MobileDevice.DoesNotExist:
-            raise NotFound("No device was found.")
-
-        serializer = self.get_serializer(instance=instance,
-                                            data=request.data,
-                                            partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.action == "add_user":
+            return MobileDeviceUsersSerializer
+        elif self.action == "activation":
+            return MobileDeviceActivationSerializer
+        elif self.action == "link":
+            return LinkedMobileDeviceSerializer
+        return MobileDeviceSerializer
 
     def perform_create(self, serializer):
-        """Reg Client and User(owner)"""
+        """Reg Client """
         # Create a client from mobile device name
         device_imei = self.request.data['imei']
-        user = get_user_model().objects.get(id=int(self.request.data['owner']))
-        client = Client.objects.create(name=device_imei)
-        AuthToken.objects.create(user=user, client=client)
+        try:
+            client = Client.objects.create(name=device_imei)
+            AuthToken.objects.create(user=self.request.user, client=client)
+        except IntegrityError:
+            return ValidationError("Device already exists.")
         serializer.save(client=client)
+
+    @action(methods=['POST'], detail=True, url_path='add-user')
+    def add_user(self, request, pk=None):
+        device = self.get_object()
+        users = get_user_model().objects.filter(
+            id__in=request.data.getlist("user_id"))
+        agent_ids = [user.agent.id for user in users]
+        serializer: ModelSerializer = self.get_serializer(device, data={
+            "users": agent_ids,
+        }, partial=True)
+        if serializer.is_valid(raise_exception=serializer.error_messages):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, url_path='remove-user')
+    def remove_user(self, request, pk=None):
+        device: MobileDevice = self.get_object()
+        user = get_user_model().objects.get(pk=pk).agent
+        device.users.remove(user)
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, url_path='activation')
+    def activation(self, request, pk=None):
+        device = self.get_object()
+        serializer = self.get_serializer(device, data=request.data)
+        if serializer.is_valid(raise_exception=serializer.error_messages):
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False, url_path='link')
+    def link(self, request, pk=None):
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=serializer.error_messages):
+            imei = self.request.data['imei']
+            print("dev-imei", imei)
+            try:
+                LinkedMobileDevice.objects.get(device__imei=imei)
+                raise IntegrityError("Device Already Linked.")
+            except LinkedMobileDevice.DoesNotExist:
+                device: MobileDevice = MobileDevice.objects.get(imei=imei)
+                serializer.save(device=device)
+                return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+
 
 
 class ListUserMobileDevices(generics.ListAPIView):
@@ -251,7 +279,9 @@ class RetrieveUserMobileDeviceDetail(generics.RetrieveAPIView):
         lookup_field = self.kwargs["id"]
         return get_object_or_404(MobileDevice, id=lookup_field)
 
+
 search_csv = ''
+
 
 @extend_schema_view(
     get=extend_schema(description='Mobile Datatable (Ignore)',
@@ -262,7 +292,7 @@ search_csv = ''
 def MobileResultsList(request):
     if request.method == 'GET':
         global search_csv, column_order, dir_order, starttable, lengthtable
-        mobileresults = NTCSpeedTest.objects.filter(tester__nro__region=request.user.nro.region)
+        mobileresults = NTCSpeedTest.objects.filter(tester__agency=request.user.employee.office)
         total = NTCSpeedTest.objects.all().count()
         draw = request.query_params.get('draw')
         start = int(request.query_params.get('start'))
@@ -343,7 +373,7 @@ class MobileResultCSV(APIView):
         maxDate = parse_date(request.query_params.get('maxdate'))
         barangay = request.query_params.get('barangay')
         region = request.query_params.get('region')
-        response = NTCSpeedTest.objects.filter(tester__nro__region=region).order_by('-date_created')
+        response = NTCSpeedTest.objects.filter(tester__agency=region).order_by('-date_created')
         # if column_order == '0':
         #     column_order = "date_created"
         # if dir_order == 'asc':
@@ -376,10 +406,10 @@ class MobileResultCSV(APIView):
 
         content = [{'date_created': timezone.localtime(response.date_created).strftime('%Y-%m-%d %I:%M%p '),
                     'test_id': response.test_id,
-                    'tester_email': response.tester.email,  
+                    'tester_email': response.tester.email,
                     'tester_first_name': response.tester.first_name,
                     'tester_last_name': response.tester.last_name,
-                    'ntc_region': response.tester.nro.region,
+                    'ntc_region': response.tester.office.region,
                     'lat': response.location.lat,
                     'lon': response.location.lon,
                     'province': response.location.province,
@@ -404,15 +434,3 @@ class MobileResultCSV(APIView):
                     }
                    for response in response]
         return Response(content)
-
-
-class ActivateMobileDeviceView(generics.CreateAPIView):
-    """View for activating mobile device"""
-
-    serializer_class = ActivateMobileDeviceSerializer
-    queryset = ActivatedMobDevice.objects.all()
-    permission_classes = (permissions.IsAdminUser,)
-    authentication_classes = (TokenAuthentication,)
-
-
-

@@ -19,7 +19,7 @@ router.register(
 )
 router.register(
     r'device/manage',
-    views.ManageMobileDeviceView,
+    views.MobileDeviceView,
     basename="mobile-device"
 )
 
@@ -53,7 +53,6 @@ urlpatterns = [
          views.MobileResultCSV.as_view(),
          name='mobileresultcsv'
          ),
-    path('manage/activate', views.ActivateMobileDeviceView.as_view(), name='activate-mobile')
 ]
 
 urlpatterns += router.urls

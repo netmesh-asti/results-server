@@ -28,12 +28,10 @@ from durin.models import AuthToken, Client
 
 from core.models import (
     MobileDevice,
+    Agent,
     MobileResult,
     Location,
     NTCSpeedTest,
-    Server,
-    NTCSpeedTest,
-    NtcRegionalOffice
 )
 
 from mobile.views import Gis
@@ -104,7 +102,10 @@ class TestMobileResultAPI(
 
 @pytest.mark.django_db
 class TestFTResultsViewset(ViewSetTest,):
-    list_url = lambda_fixture(lambda: reverse("mobile:user-tests-list"))
+    list_url = lambda_fixture(
+        lambda:
+            reverse("mobile:user-tests-list"))
+
 
     class TestList(
         UsesListEndpoint,
@@ -112,32 +113,32 @@ class TestFTResultsViewset(ViewSetTest,):
         Returns200,
         AsUser('user'),
     ):
+
         @pytest.fixture
         def client(self,
                    unauthed_client,
+                   authenticated_user,
                    user,
-                   user_token,
+                   agent,
                    mobile_result,
                    mobile_device_details,
                    location,
+                   office
                    ):
             mobile_result = MobileResult.objects.create(**mobile_result)
             test_loc = Location.objects.create(**location)
             mob_device = MobileDevice.objects.create(
                 **mobile_device_details)
             res = NTCSpeedTest.objects.create(
-                tester=user,
+                tester=user.agent,
                 result=mobile_result,
                 location=test_loc,
                 test_device=mob_device,
                 client_ip="127.0.0.1"
             )
-            client = APIClient()
-            client.credentials(**{
-                "Authorization": "Token {}".format(user_token)
-            })
-            client.force_authenticate(user=user)
-            return client
+            return authenticated_user
+
+        lambda_fixture(lambda employee: None)
 
         def test_list_result_has_test_result(self, json):
             """Test that listing results has actual result"""
@@ -165,12 +166,12 @@ def data(mobile_device_details):
             }
 
 
-@pytest.mark.django_db
-def test_device_activate_success(client, data):
-    url = reverse("mobile:activate-mobile")
-    res = client.post(url, data, format='json')
-    print(res)
-    assert res.status_code == status.HTTP_201_CREATED
+# @pytest.mark.django_db
+# def test_device_activate_success(token_client, data):
+#     url = reverse("mobile:activate-mobile")
+#     res = token_client.post(url, data, format='json')
+#     print(res)
+#     assert res.status_code == status.HTTP_201_CREATED
 
     # def test_list_result_has_device(self):
     #     """test that individual result has device id"""

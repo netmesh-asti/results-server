@@ -31,7 +31,6 @@ class TestUserModel:
         email = 'test@gmaIl.coM'
         user = get_user_model().objects.create_user(
             email,
-            nro,
             'test123'
         )
         assert user.email == email.lower()
@@ -45,14 +44,13 @@ class TestUserModel:
 @pytest.mark.django_db
 class TestRfcDeviceModel:
 
-    def test_rfc_device_create_success(self, user, client):
+    def test_rfc_device_create_success(self, agent, token_client):
         """Test that rfc device is created successfully"""
         rfc_device_info = {
             "manufacturer": 'MSI',
             "product": 'GF63',
             "version": '1.0',
-            "client": client,
-            "owner": user
+            "client": token_client
         }
         device: RfcDevice = models.RfcDevice.objects.create(
             **rfc_device_info

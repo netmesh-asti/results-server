@@ -48,7 +48,7 @@ class TestAdminCreateSuccess(
     APIViewTest,
     Returns201,
     UsesPostMethod,
-    AsUser('admin')
+    AsUser('admin_user')
 ):
 
     url = lambda_fixture(lambda: reverse("server:servers"))

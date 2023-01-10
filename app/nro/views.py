@@ -7,7 +7,7 @@ from rest_framework import (
 from durin.auth import TokenAuthentication
 
 from nro import seriailzers, permissions
-from core.models import NtcRegionalOffice
+from core.models import RegionalOffice
 
 
 class NroOfficeView(generics.ListCreateAPIView):
@@ -18,7 +18,7 @@ class NroOfficeView(generics.ListCreateAPIView):
     authentication_classes = (TokenAuthentication, )
 
     def get_queryset(self):
-        queryset = NtcRegionalOffice.objects.all().order_by(
+        queryset = RegionalOffice.objects.all().order_by(
             'id'
         )
         return queryset

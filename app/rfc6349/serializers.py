@@ -26,7 +26,7 @@ class RfcDeviceSerializer(serializers.ModelSerializer):
     """Serializer from RFC Test Devices"""
     class Meta:
         model = RfcDevice
-        exclude = ("client",)
+        exclude = ("id", "client", "users")
         read_only_fields = ("date_created",)
 
 

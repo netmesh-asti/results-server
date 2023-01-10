@@ -25,16 +25,10 @@ from user.serializers import (
     UserActiveSerializer
 )
 from rfc6349.serializers import (
-    RfcDeviceIdSerializer,
     RfcDeviceUserSerializer
 )
-from mobile.serializers import (
-    MobileDeviceUserSerializer
-)
+
 from core.models import (
-    MobileResult,
-    MobileDevice,
-    PublicSpeedTest,
     RfcDeviceUser,
     NTCSpeedTest,
     RfcTest
@@ -44,7 +38,7 @@ from app.settings import TEST_CLIENT_NAME
 from io import StringIO
 import zipfile
 import csv
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 
 
 class CustomTokenScheme(DurinTokenScheme):
@@ -94,7 +88,7 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.action == "list":
             return get_user_model().objects.filter(
-                nro=self.request.user.nro,
+                employee_agency=self.request.user.agent.office,
                 is_active=True
             )
         elif self.action == "create":
@@ -114,8 +108,6 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
             return ProfileImageSerializer
         elif self.action == "assign_rfc_device":
             return RfcDeviceUserSerializer
-        elif self.action == "assign_mobile_device":
-            return MobileDeviceUserSerializer
         elif self.action == "user_active":
             return UserActiveSerializer
         return UserSerializer
@@ -206,7 +198,10 @@ class ManageFieldUsersView(viewsets.ModelViewSet):
         serializer = self.get_serializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            AuthToken.objects.get(user=user).delete()
+            try:
+                AuthToken.objects.get(user=user).delete()
+            except AuthToken.DoesNotExist:
+                pass
             return response.Response(
                 serializer.data,
                 status=status.HTTP_200_OK)

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 
+from core.models import Agent
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,10 +12,9 @@ class UserSerializer(serializers.ModelSerializer):
             'password',
             'first_name',
             'last_name',
-            'nro',
             'profile_picture',
             'is_staff',)
-        read_only_fields = ('id', 'profile_picture', 'nro', 'is_staff')
+        read_only_fields = ('id', 'profile_picture', 'is_staff')
         extra_kwargs = {'password': {'write_only': True, 'min_length': 5}}
         depth = 1
 
@@ -30,6 +30,15 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class AgentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Agent
+        fields = ("id", "agent", "office")
+        read_only_fields = ("id",)
+        depth = 1
 
 
 class ListUserRequestSerializer(serializers.ModelSerializer):

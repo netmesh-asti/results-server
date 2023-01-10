@@ -9,7 +9,7 @@ from core.group_admin import GroupAdminForm
 
 class UserAdmin(BaseUserAdmin):
     ordering = ['id']
-    list_display = ['email', 'first_name', 'last_name', 'registration', 'nro']
+    list_display = ['email', 'first_name', 'last_name', 'registration']
     fieldsets = (
         (None, {'fields': ('email', 'nro', 'password')}),
         (_('Personal Info'), {'fields': ('first_name', 'last_name')}),
@@ -51,7 +51,7 @@ class NroAdmin(admin.ModelAdmin):
 # Register the new Group ModelAdmin.
 admin.site.register(Group, GroupAdmin)
 
-admin.site.register(models.NtcRegionalOffice, NroAdmin)
+admin.site.register(models.RegionalOffice, NroAdmin)
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.RfcDevice)
 admin.site.register(models.MobileDevice)
@@ -61,4 +61,3 @@ admin.site.register(models.Server, ServerAdmin)
 admin.site.register(models.PublicSpeedTest)
 admin.site.register(models.NTCSpeedTest)
 admin.site.register(models.RfcTest)
-admin.site.register(models.ActivatedMobDevice)

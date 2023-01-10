@@ -6,7 +6,7 @@ registration_choices = [
         ('disabled', 'Disabled')
     ]
 
-ntc_region_choices = [
+region_choices = [
     ('1', 'Region I (Ilocos Region)'),
     ('2', 'Region II (Cagayan Valley)'),
     ('3', 'Region III (Central Luzon)'),
@@ -27,6 +27,12 @@ ntc_region_choices = [
     ('Central', 'NTC Region Central'),
     ('unknown', 'Unknown'),
     ('Demo', 'Demo')
+]
+
+office_choices = [
+    ('NTC', "National Telecommunication Commission"),
+    ('DICT', "Department of Information and Communications Technology"),
+    ('ASTI', "Advanced Science and Technology Institute")
 ]
 
 device_choices = [

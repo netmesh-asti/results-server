@@ -11,7 +11,7 @@ from django.conf import settings
 
 from durin.models import Client
 
-from core import choices
+from . import choices
 
 
 def profile_image_file_path(instance, filename):
@@ -22,10 +22,10 @@ def profile_image_file_path(instance, filename):
     return os.path.join('uploads', 'user', filename)
 
 
-class NtcRegionalOffice(models.Model):
+class RegionalOffice(models.Model):
     address = models.CharField(max_length=250, blank=True)
     region = models.CharField(
-        max_length=20, choices=choices.ntc_region_choices,
+        max_length=20, choices=choices.region_choices,
         default='unknown',
         unique=True,
         editable=False
@@ -63,23 +63,21 @@ class NtcRegionalOffice(models.Model):
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, email, nro, password=None, **kwargs):
+    def create_user(self, email, password=None, **kwargs):
         if not email:
             raise ValueError()
-        user = self.model(email=self.normalize_email(email), nro=nro, **kwargs)
+        user = self.model(email=self.normalize_email(email), **kwargs)
         user.set_password(password)
         user.save(using=self._db)
 
         return user
 
-    def create_superuser(self, email, nro, password, **extra_fields):
+    def create_superuser(self, email, password, **extra_fields):
         """
         Create and save a SuperUser with the given email and password.
         """
-        superuser_office = NtcRegionalOffice.objects.get(id=nro.id)
         user = self.create_user(
             email,
-            superuser_office,
             password,
             **extra_fields)
         user.is_staff = True
@@ -95,7 +93,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=20)
     last_name = models.CharField(max_length=20)
     registration = models.DateField(auto_now_add=True)
-    nro = models.ForeignKey(NtcRegionalOffice, on_delete=models.PROTECT)
     timezone = models.CharField(
         max_length=50,
         default='Asia/Manila',
@@ -105,15 +102,27 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         upload_to=profile_image_file_path)
     is_ntc = models.BooleanField(default=True)
-    is_field_tester = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'nro']
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     USERNAME_FIELD = 'email'
+
+
+class Office(models.Model):
+    name = models.CharField(max_length=250, choices=choices.office_choices)
+    # Multiple agencies in a region
+    # NTC, DICT and so on... can be in a region
+    region = models.ForeignKey(RegionalOffice, on_delete=models.PROTECT)
+
+
+class Agent(models.Model):
+    agent = models.OneToOneField(User, on_delete=models.CASCADE)
+    office = models.ForeignKey(Office, on_delete=models.CASCADE)
+    is_field_tester = models.BooleanField(default=True)
 
 
 class RfcDevice(models.Model):
@@ -122,9 +131,7 @@ class RfcDevice(models.Model):
         by the RFC-6349 test agents
     """
     client = models.OneToOneField(Client, on_delete=models.PROTECT)
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT)
+    users = models.ManyToManyField(Agent)
     name = models.CharField(max_length=250, null=False)
     manufacturer = models.CharField(max_length=250, blank=True)
     product = models.CharField(max_length=250, blank=True)
@@ -141,28 +148,27 @@ class RfcDevice(models.Model):
         verbose_name_plural = 'RFC6349 Test Devices'
         ordering = ['-id']
         constraints = [
-            models.UniqueConstraint(fields=[
-                'owner', 'serial_number', 'name'],
-                name="unique rfc device")
+            models.UniqueConstraint(
+                fields=['serial_number', 'name'],
+                name="unique-rfc-device")
             ]
 
     def __str__(self):
-        return f"{self.owner.email} {self.serial_number}"
+        return f"{self.client} {self.serial_number}"
 
 
 class MobileDevice(models.Model):
     """Android Device assigned to Field Tester"""
     name = models.CharField(max_length=100, blank=False)
     client = models.OneToOneField(Client, on_delete=models.PROTECT)
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT)
+    users = models.ManyToManyField(Agent)
     serial_number = models.CharField(max_length=250, blank=True, unique=True)
     imei = models.CharField(max_length=250, blank=True, unique=True)
     phone_model = models.CharField(max_length=250, blank=True)
     android_version = models.CharField(max_length=100, blank=True)
     ram = models.CharField(max_length=250, blank=True)
     storage = models.CharField(max_length=250, blank=True)
+    is_active = models.BooleanField(blank=True, default=True)
 
     class Meta:
         constraints = [
@@ -512,7 +518,7 @@ class NTCSpeedTest(models.Model):
         unique=True
     )
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
-    tester = models.ForeignKey(User,
+    tester = models.ForeignKey(Agent,
                                on_delete=models.PROTECT)
     test_device = models.ForeignKey(MobileDevice,
                                     on_delete=models.PROTECT)
@@ -534,7 +540,7 @@ class RfcTest(models.Model):
         unique=True
     )
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
-    tester = models.ForeignKey(User,
+    tester = models.ForeignKey(Agent,
                                on_delete=models.PROTECT)
     test_device = models.ForeignKey(RfcDevice,
                                     on_delete=models.PROTECT)
@@ -560,24 +566,10 @@ class RfcDeviceUser(models.Model):
         ]
 
 
-class MobileDeviceUser(models.Model):
-    device = models.ForeignKey(MobileDevice, on_delete=models.PROTECT)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    assigned_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=[
-                "device", "user"
-            ], name="One Mobile device instance per user")
-        ]
-
-
-class ActivatedMobDevice(models.Model):
-    imei = models.OneToOneField(
-        MobileDevice,
-        on_delete=models.PROTECT
-    )
+class LinkedMobileDevice(models.Model):
+    owner = models.ForeignKey(Agent, on_delete=models.CASCADE)
+    device = models.OneToOneField(MobileDevice, null=True, blank=True, on_delete=models.CASCADE)
+    link_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "%s<%s>" % (self.imei.imei, self.imei.owner.email)
+        return "%s<%s>" % (self.owner, self.device.name)
