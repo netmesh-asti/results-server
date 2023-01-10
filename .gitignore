@@ -137,3 +137,6 @@ dmypy.json
 #thirdparty
 portal/
 docker-data/
+
+#pycharm
+.idea/
