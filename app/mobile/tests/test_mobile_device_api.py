@@ -125,10 +125,12 @@ class TestMobileDeviceAdminAPI(ViewSetTest):
     class TestLinkDevice(
         UsesPostMethod,
         Returns200,
-        AsUser("admin_user")
+        AsUser("user")
     ):
+
+
         url = lambda_fixture(
-            lambda: url_for("mobile:mobile-device-link")
+            lambda user, agent: url_for("mobile:mobile-device-link")
         )
 
         data = lambda_fixture(lambda user_mobile_device: {

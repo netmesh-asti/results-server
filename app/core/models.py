@@ -567,7 +567,7 @@ class RfcDeviceUser(models.Model):
 
 
 class LinkedMobileDevice(models.Model):
-    owner = models.ForeignKey(Agent, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Agent, null=True, blank=True, on_delete=models.CASCADE)
     device = models.OneToOneField(MobileDevice, null=True, blank=True, on_delete=models.CASCADE)
     link_date = models.DateTimeField(auto_now_add=True)
 

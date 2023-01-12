@@ -120,5 +120,6 @@ class LinkedMobileDeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LinkedMobileDevice
-        fields = ("imei",)
-        read_only_fields = ("id",)
+        fields = ("imei", )
+        read_only_fields = ("id", "owner")
+

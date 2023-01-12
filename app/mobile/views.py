@@ -44,7 +44,6 @@ from . import permissions as custom_permission
 from django.utils import timezone
 
 
-
 class MobileResultsView(generics.CreateAPIView):
     """View for Creating and Listing Mobile Speed Test Results"""
     queryset = MobileResult.objects.all()
@@ -229,8 +228,9 @@ class MobileDeviceView(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, url_path='remove-user')
     def remove_user(self, request, pk=None):
         device: MobileDevice = self.get_object()
-        user = get_user_model().objects.get(pk=pk).agent
-        device.users.remove(user)
+        user_pk = request.data['user']
+        agent = get_user_model().objects.get(pk=user_pk).agent
+        device.users.remove(agent)
         return Response(status=status.HTTP_200_OK)
 
     @action(methods=["POST"], detail=True, url_path='activation')
@@ -243,21 +243,17 @@ class MobileDeviceView(viewsets.ModelViewSet):
 
     @action(methods=["POST"], detail=False, url_path='link')
     def link(self, request, pk=None):
-
+        owner = self.request.user.agent
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid(raise_exception=serializer.error_messages):
             imei = self.request.data['imei']
-            print("dev-imei", imei)
             try:
                 LinkedMobileDevice.objects.get(device__imei=imei)
                 raise IntegrityError("Device Already Linked.")
             except LinkedMobileDevice.DoesNotExist:
                 device: MobileDevice = MobileDevice.objects.get(imei=imei)
-                serializer.save(device=device)
+                serializer.save(device=device, owner=owner)
                 return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-
-
 
 
 class ListUserMobileDevices(generics.ListAPIView):

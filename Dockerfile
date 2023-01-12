@@ -1,4 +1,4 @@
-FROM python:3.10.2-alpine
+FROM docker.io/python:3.10.2-alpine
 LABEL maintainer="jeanjay.quitayen@asti.dost.gov.ph"
 ENV PYTHONUNBUFFERED 1
 
@@ -30,7 +30,9 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps \
         mkdir -p /vol/web/media && \
         mkdir -p /vol/web/static && \
         chown -R netmesh:netmesh /vol && \
+        chown -R netmesh:netmesh /app && \
         chmod -R 755 /vol && \
+        chmod -R 755 /app && \
         chmod -R +x /scripts
 
 ENV PATH="/scripts:$PATH"
